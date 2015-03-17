@@ -1,0 +1,32 @@
+<html>
+  <head>
+  <style>
+    .node {
+      stroke: 'black';
+    }
+    .link {
+      stroke-width: 1px;
+    }
+    .handle {
+      fill: 'blue';
+    }
+  </style>
+    <title>All the Same, I Saw it First</title>
+  </head>
+  <body>
+    <input type="range" min="1" max="100" id="weight">
+    <div>
+      <span>Handle nodes: </span><span id="handle_nodes"></span>
+    </div>
+    <div id="teeth">
+    </div>
+    <div id="comb">
+      <span>Weight Sum: </span><span id="comb_weight_sum"></span><br/>
+      <span>RHS - LHS: </span><span id="comb_difference"></span><br/>
+    </div>
+    <div align="center" id="force_graph"></div>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="src/atsisif.js"></script>
+    <script>draw_graph();</script>
+  </body>
+</html>
