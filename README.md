@@ -24,3 +24,6 @@ comb.
    subgraph which is "bounded" by a fractional cycle as a handle and then all
    the extrusions out of this subgraph are taken as teeth, then this might be a
    candidate for a comb inequality.
+2. When starting out with a handle, one can add to it all the nodes that are
+   connected to at least two nodes in the handle so far. This will decrease the
+   outward flow of a handle.
