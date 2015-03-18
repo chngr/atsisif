@@ -30,3 +30,6 @@ comb.
 3. It appears that things nodes on the boundary of the handle should have
    out degree from the comb of at most 1. Moreover, this single thing coming
    outside of the handle should be included as a tooth.
+4. Need the edge at the extremes of teeth to be of weight 1.
+5. Things are complicated when the exterior of the handle is given by nodes
+   connected to something with very small edge weight.
