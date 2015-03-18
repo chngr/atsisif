@@ -10,9 +10,10 @@ function draw_graph() {
       current_tooth = -1,
       teeth = [];
 
-  var colour = d3.scale.linear().domain([0.0,0.5,1.0]).range(["cornflowerblue", "red", "black"]);
-  var xScale = d3.scale.linear().domain([0,width]).range([0,width]);
-  var yScale = d3.scale.linear().domain([0,height]).range([0,height]);
+  var colour = d3.scale.linear().domain([0.0,0.5,1.0]).range(["cornflowerblue", "red", "black"]),
+      teeth_colours = d3.scale.linear().domain([0,5,10,15]).range(["green", "magenta", "yellow", "orange"]),
+      xScale = d3.scale.linear().domain([0,width]).range([0,width]),
+      yScale = d3.scale.linear().domain([0,height]).range([0,height]);
 
   var force = d3.layout.force()
                 .charge(-10)
@@ -64,7 +65,6 @@ function draw_graph() {
     edges = force.links().map(function(e) {
       return {a: e.source.index, b: e.target.index, weight: e.value };
     });
-    console.log(edges);
 
     link = link.data(g.edges)
                .enter().append("line")
@@ -91,12 +91,11 @@ function draw_graph() {
                   } else {
                     handle.splice(handle.indexOf(d.index), 1);
                   }
-                  d3.select("#handle_nodes").text(handle);
                 } else if(toggles.tooth) {
                   d3.select(this).classed("tooth", d.tooth = !d.tooth)
                     .style("stroke", function(p) {
                       if(p.tooth) {
-                        return "green";
+                        return teeth_colours(current_tooth);
                       } else {
                         return "black";
                       }
@@ -105,20 +104,14 @@ function draw_graph() {
                     teeth[current_tooth].push(d.index);
                   } else {
                     for(var i = 0; i < teeth.length; i++) {
-                      if(teeth[i].indexOf(d.index) > -1) {
-                        teeth[i].splice(d.index, 1);
+                      var idx = teeth[i].indexOf(d.index);
+                      if(idx > -1) {
+                        teeth[i].splice(idx, 1);
                       }
                     }
                   }
-                  d3.select("#tooth_" + current_tooth).text(teeth[current_tooth]);
                 }
-                var comb_sum = get_delta_weight(handle) +
-                  teeth.reduce(function(acc, x) {
-                    return acc + get_delta_weight(x);
-                  }, 0),
-                  rhs = 3 * teeth.length + 1;
-                d3.select("#comb_weight_sum").text(comb_sum);
-                d3.select("#comb_difference").text(rhs - comb_sum)
+                update_display();
                });
 
     force.on("tick", function() {
@@ -131,6 +124,19 @@ function draw_graph() {
     });
   });
 
+  function update_display() {
+    for(var i = 0; i < teeth.length; i++) {
+      d3.select("#tooth_" + i).text(teeth[i]);
+    }
+    d3.select("#handle_nodes").text(handle);
+    var comb_sum = get_delta_weight(handle) +
+      teeth.reduce(function(acc, x) {
+        return acc + get_delta_weight(x);
+      }, 0),
+      rhs = 3 * teeth.length + 1;
+    d3.select("#comb_weight_sum").text(comb_sum);
+    d3.select("#comb_difference").text(rhs - comb_sum)
+  }
   d3.select("#weight").on("input", function() { update(this.value); });
   update(100);
   function update(wt) {
@@ -145,8 +151,10 @@ function draw_graph() {
   };
 
   function keydown() {
-    console.log(d3.event.keyCode);
     switch(d3.event.keyCode) {
+      case KEYCODE.c:
+        clear();
+        break;
       case KEYCODE.h:
         toggle('handle');
         break;
@@ -164,6 +172,18 @@ function draw_graph() {
         break;
     }
   }
+  function clear() {
+    for(var i = 0; i < teeth.length; i++) {
+      d3.select("#tooth_" + i + "_container").remove();
+    }
+    current_tooth = -1;
+    previous_tooth = -1;
+    teeth = [];
+    handle = [];
+    update_display();
+    vis.selectAll('.handle').style("fill", "red").classed('handle', false);
+    vis.selectAll('.tooth').style("stroke", "black").classed("tooth", false);
+  }
   function toggle(t) {
     var toggle_keys = Object.keys(toggles);
     for(var i in toggle_keys) {
@@ -173,7 +193,6 @@ function draw_graph() {
       }
     }
     toggles[t] = !toggles[t];
-    console.log(toggles);
   }
 
   function add_tooth() {
@@ -182,9 +201,10 @@ function draw_graph() {
     teeth.push([]);
 
     var new_tooth_name = "tooth_" + current_tooth + ": ",
-        new_tooth_elem = d3.select("#teeth").append("p");
+        new_tooth_elem = d3.select("#teeth").append("p").attr("id", "tooth_" + current_tooth + "_container");
     new_tooth_elem.append("span")
       .attr("id", "tooth_" + current_tooth + "_label")
+      .style("color", teeth_colours(current_tooth))
       .text(new_tooth_name);
     new_tooth_elem.append('span').attr('id', "tooth_" + current_tooth);
     tooth_colours(previous_tooth, current_tooth);
