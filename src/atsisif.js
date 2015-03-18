@@ -86,7 +86,8 @@ function draw_graph() {
         teeth: [],
         cur_t: -1,
         prev_t: -1,
-      };
+      },
+      pan_enabled = true;
 
   var colour = d3.scale.linear()
                   .domain([0.0,0.5,1.0])
@@ -156,7 +157,8 @@ function draw_graph() {
                .enter().append("circle")
                .attr("class", "node")
                .attr("r", 2)
-               .call(force.drag)
+               .call(node_drag)
+               .on("dblclick", releasenode)
                .on("click", node_click);
 
     force.on("tick", function() {
@@ -212,7 +214,9 @@ function draw_graph() {
   }
 
   function zoom() {
-    svg.attr("transform", "translate("+ d3.event.translate +")scale("+ d3.event.scale +")");
+    if(pan_enabled) {
+      svg.attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
+    }
   }
 
   function node_click(d) {
@@ -243,4 +247,28 @@ function draw_graph() {
     }
     update_display(comb, edges);
    };
+
+  var node_drag = d3.behavior.drag()
+                    .on("dragstart", dragstart)
+                    .on("drag", dragmove)
+                    .on("dragend", dragend);
+  function dragstart(d, i) {
+    force.stop();
+    pan_enabled = false;
+  }
+  function dragmove(d, i) {
+    d.px += d3.event.dx;
+    d.py += d3.event.dy;
+    d.x += d3.event.dx;
+    d.y += d3.event.dy;
+  }
+  function dragend(d, i) {
+    d.fixed = true;
+    pan_enabled = true;
+    force.resume();
+  }
+  function releasenode(d) {
+    d.fixed = false;
+  }
 }
+
