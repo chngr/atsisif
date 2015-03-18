@@ -1,5 +1,6 @@
 var KEYCODE = {'h': 72, 'c': 67, 't': 84, 'n': 78, 'b': 66, 'd': 68, 'a': 65},
-    TOGGLES = {'handle': false, 'tooth': false};
+    TOGGLES = {'handle': false, 'tooth': false},
+    GRAPH = {};
 
 function toggle(t) {
   var toggle_keys = Object.keys(TOGGLES), key, i;
@@ -138,13 +139,16 @@ function draw_graph() {
   d3.json("/data/c.json", function(err, g) {
     var n = g.nodes, nodes = [];
     for(var i = 0; i < n; i++) { nodes.push({name: i}); }
+    GRAPH = g;
+    GRAPH.nodes = nodes;
+    GRAPH.a_edges = GRAPH.edges;
 
-    force.nodes(nodes).links(g.edges).start();
+    force.nodes(nodes).links(GRAPH.a_edges).start();
     edges = force.links().map(function(e) {
       return {a: e.source.index, b: e.target.index, weight: e.value };
     });
 
-    link = link.data(g.edges)
+    link = link.data(GRAPH.edges)
                .enter().append("line")
                .attr("class", "link")
                .style("stroke", function (d) { return colour(d.value); });
@@ -168,8 +172,19 @@ function draw_graph() {
 
   d3.select("#weight").on("input", function() {
     var wt = this.value;
+    GRAPH.a_edges = GRAPH.edges.filter(function (e) {return 100 * e.value <= wt;});
     d3.select("#weight").property("value", wt);
-    link.style("stroke-opacity", function(d) { return 100 * d.value <= wt ? 1 : 0; })
+    link = link.data(GRAPH.a_edges);
+    link.exit().remove();
+    link.enter().insert("line").style("stroke", function(d) { return colour(d.value); })
+    node = node.data(GRAPH.nodes);
+    node.exit().remove();
+    node.enter().insert("circle")
+        .attr("class", "node")
+        .attr("r", 2)
+        .call(force.drag)
+        .on("click", node_click);
+    force.nodes(GRAPH.nodes).links(GRAPH.a_edges).start();
   });
 
   /* Event handlers */
