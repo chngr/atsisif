@@ -10,18 +10,16 @@ function toggle(t) {
   }
 }
 
-function update_display(comb, edges) {
+function update_display(comb) {
   for(var i = 0; i < comb.teeth.length; i++) {
     d3.select("#tooth_" + i).text(comb.teeth[i]);
   }
   d3.select("#handle_nodes").text(comb.handle);
   var comb_sum, rhs = 3 * comb.teeth.length + 1;
-  if(edges) {
-    comb_sum = get_delta_weight(comb.handle, edges) +
-      comb.teeth.reduce(function(acc, x) {
-        return acc + get_delta_weight(x, edges);
-      }, 0);
-  }
+  comb_sum = get_delta_weight(comb.handle) +
+    comb.teeth.reduce(function(acc, x) {
+      return acc + get_delta_weight(x);
+    }, 0);
   d3.select("#comb_weight_sum").text(comb_sum);
   d3.select("#comb_difference").text(rhs - comb_sum)
 }
@@ -38,10 +36,12 @@ function reset_comb(comb, vis) {
     d3.select("#tooth_" + i + "_container").remove();
   }
   comb.cur_t = comb.prev_t = -1;
-  comb.teeth = comb.handle = [];
+  comb.teeth = [];
+  comb.handle = [];
   update_display(comb);
   vis.selectAll('.handle').style("fill", "red").classed('handle', false);
   vis.selectAll('.tooth').style("stroke", "black").classed("tooth", false);
+  vis.selectAll('.node').call(function(d) { d.fixed = false; });
 }
 
 function add_tooth(comb, t_cols) {
@@ -72,10 +72,15 @@ function back_tooth(comb) {
   tooth_colours(comb.prev_t);
   console.log("Current tooth: " + comb.cur_t);
 }
-function get_delta_weight(V, edges) {
-  return edges.reduce(function(a, e) {
-    return (V.indexOf(e.a) > -1) + (V.indexOf(e.b) > -1) == 1 ? a + e.weight : a;
+function get_delta_weight(V) {
+  var val = GRAPH.edges.reduce(function(a, e) {
+    if((V.indexOf(e.source.index) != -1) + (V.indexOf(e.target.index) != -1) == 1) {
+      return a + e.value;
+    } else {
+      return a;
+    }
   }, 0);
+  return val;
 }
 
 function draw_graph() {
@@ -245,7 +250,7 @@ function draw_graph() {
         }
       }
     }
-    update_display(comb, edges);
+    update_display(comb);
    };
 
   var node_drag = d3.behavior.drag()
@@ -271,4 +276,5 @@ function draw_graph() {
     d.fixed = false;
   }
 }
+
 
