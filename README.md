@@ -27,3 +27,6 @@ comb.
 2. When starting out with a handle, one can add to it all the nodes that are
    connected to at least two nodes in the handle so far. This will decrease the
    outward flow of a handle.
+3. It appears that things nodes on the boundary of the handle should have
+   out degree from the comb of at most 1. Moreover, this single thing coming
+   outside of the handle should be included as a tooth.
