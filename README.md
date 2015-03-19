@@ -33,6 +33,8 @@ comb.
 4. Need the edge at the extremes of teeth to be of weight 1.
 5. Things are complicated when the exterior of the handle is given by nodes
    connected to something with very small edge weight.
+6. One thing that is useful when slowly constructing combs is to add paths that
+   are joined to pairs of nodes that are already in the handle.
 
 ## Ideas for Heuristics
 In order for a comb inequality to be violated:
@@ -60,3 +62,18 @@ then combs of certain sizes in the reduced graph will be combs in the bigger
 graph.
 One of the main problems, it seems, is that lots of low weight edges leak out of
 the handle and this adds up.
+
+### Observation From Running Heuristic by Hand
+
+This is seemingly useful procedure so far:
+  1. Begin by setting lower threshold to around 0.5 and upper threshold to 0.99;
+  2. Look for nontrivial connected components in the resulting induced graph
+     and let these be the initial candidates for handles.
+  3. Up the upper threshold back to 1 and add teeth: just all the nodes that are
+     adjacent to the comb so far with edge weight 1.
+  4. Lower the upper threshold back to 0.99 and decrease the lower threshold
+     ever so slightly. This will lead to expanding of the handle, typically.
+  5. Now repeat 3 and 4 until the lower is all the way to 0 and upper is 1.
+One thing that takes place while varying the lower threshold is that combs that
+used to be separate come together. Moreover, it appears that things that used to
+be teeth might also join the handle.
