@@ -15,7 +15,7 @@ function update_display(comb) {
     d3.select("#tooth_" + i).text(comb.teeth[i]);
   }
   d3.select("#handle_nodes").text(comb.handle);
-  var comb_sum, rhs = 3 * comb.teeth.length.filter(function(d) {return d.length > 0; }) + 1;
+  var comb_sum, rhs = 3 * comb.teeth.filter(function(d) {return d.length > 0;}).length + 1;
   comb_sum = get_delta_weight(comb.handle) +
     comb.teeth.reduce(function(acc, x) {
       return acc + get_delta_weight(x);
@@ -46,17 +46,22 @@ function reset_comb(comb, vis) {
 
 function add_tooth(comb, t_cols) {
   comb.teeth.push([]);
-
-  var new_name = "tooth_" + comb.teeth.length + ": ",
+  var new_idx = comb.teeth.length - 1,
+      new_name = "tooth_" + new_idx + ": ",
       new_elt = d3.select("#teeth")
                   .append("p")
-                  .attr("id", "tooth_" + comb.teeth.length + "_container");
+                  .attr("id", "tooth_" + new_idx + "_container");
   new_elt.append("span")
-    .attr("id", "tooth_" + comb.teeth.length + "_label")
-    .style("color", t_cols(comb.teeth.length))
+    .attr("id", "tooth_" + new_idx + "_label")
+    .style("color", t_cols(new_idx))
     .text(new_name);
-  new_elt.append('span').attr('id', "tooth_" + comb.teeth.length);
-  tooth_colours(comb);
+  new_elt.append('span').attr('id', "tooth_" + new_idx);
+
+  if(comb.teeth.length - comb.cur_t == 2) {
+    comb.prev_t = comb.cur_t;
+    comb.cur_t += 1;
+    tooth_colours(comb);
+  }
 }
 function next_tooth(comb) {
   comb.prev_t = comb.cur_t;
