@@ -33,3 +33,30 @@ comb.
 4. Need the edge at the extremes of teeth to be of weight 1.
 5. Things are complicated when the exterior of the handle is given by nodes
    connected to something with very small edge weight.
+
+## Ideas for Heuristics
+In order for a comb inequality to be violated:
+  - For every node in the handle that is adjacent to things on the outside, the
+    combined weight of all these edges is not much more than 1;
+  - Every edge coming out of the handle with significant weight must be included
+    as a tooth;
+  - The final edge at the very end of a tooth should have weight close to 1 so
+    that the weight leaking out of the tooth on the end not connected to the
+    handle is close to 1.
+In the ideal case when all the leaking edges from the teeth are 1 and the all
+the delta edges from the handle have weight 1, we clearly have a violated comb
+inequality.
+
+The above ideas become messy when there are edges that have weight close to 0.
+To try simplifying things, then, it may be useful to round up and down edge
+weights: edge weights below some threshold are rounded down to 0 and edge
+weights above the complementary threshold are taken to be 1. The resulting
+simplified graph may not actually satisfy subtour inequalities, but might allow
+one to find violated comb inequalities in the reduced graph that might extend up
+to the bigger graph once things are readjusted.
+
+In fact, one can probably prove that, if the rounding threshold is not too high,
+then combs of certain sizes in the reduced graph will be combs in the bigger
+graph.
+One of the main problems, it seems, is that lots of low weight edges leak out of
+the handle and this adds up.
