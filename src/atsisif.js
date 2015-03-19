@@ -15,7 +15,7 @@ function update_display(comb) {
     d3.select("#tooth_" + i).text(comb.teeth[i]);
   }
   d3.select("#handle_nodes").text(comb.handle);
-  var comb_sum, rhs = 3 * comb.teeth.length + 1;
+  var comb_sum, rhs = 3 * comb.teeth.length.filter(function(d) {return d.length > 0; }) + 1;
   comb_sum = get_delta_weight(comb.handle) +
     comb.teeth.reduce(function(acc, x) {
       return acc + get_delta_weight(x);
@@ -45,19 +45,17 @@ function reset_comb(comb, vis) {
 }
 
 function add_tooth(comb, t_cols) {
-  comb.prev_t = comb.cur_t;
-  comb.cur_t += 1;
   comb.teeth.push([]);
 
-  var new_name = "tooth_" + comb.cur_t + ": ",
+  var new_name = "tooth_" + comb.teeth.length + ": ",
       new_elt = d3.select("#teeth")
                   .append("p")
-                  .attr("id", "tooth_" + comb.cur_t + "_container");
+                  .attr("id", "tooth_" + comb.teeth.length + "_container");
   new_elt.append("span")
-    .attr("id", "tooth_" + comb.cur_t + "_label")
-    .style("color", t_cols(comb.cur_t))
+    .attr("id", "tooth_" + comb.teeth.length + "_label")
+    .style("color", t_cols(comb.teeth.length))
     .text(new_name);
-  new_elt.append('span').attr('id', "tooth_" + comb.cur_t);
+  new_elt.append('span').attr('id', "tooth_" + comb.teeth.length);
   tooth_colours(comb);
 }
 function next_tooth(comb) {
@@ -69,7 +67,7 @@ function next_tooth(comb) {
 function back_tooth(comb) {
   comb.prev_t = comb.cur_t;
   comb.cur_t = comb.cur_t > 0 ? comb.cur_t - 1 : comb.cur_t;
-  tooth_colours(comb.prev_t);
+  tooth_colours(comb);
   console.log("Current tooth: " + comb.cur_t);
 }
 function get_delta_weight(V) {
@@ -262,9 +260,9 @@ function draw_graph() {
           }
         }
       }
+      update_display(comb);
     }
-    update_display(comb);
-   };
+  }
 
   var node_drag = d3.behavior.drag()
                     .on("dragstart", dragstart)
@@ -289,5 +287,3 @@ function draw_graph() {
     d.fixed = false;
   }
 }
-
-
