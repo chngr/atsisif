@@ -6,7 +6,11 @@ function toggle(t) {
   var toggle_keys = Object.keys(TOGGLES), key, i;
   for(i in toggle_keys) {
     key = toggle_keys[i];
+    d3.select("#" + key + "_toggle").style("background", "white");
     TOGGLES[key] = key != t ? false : !TOGGLES[key];
+  }
+  if(TOGGLES[t]) {
+    d3.select("#" + t + "_toggle").style("background", "green");
   }
 }
 
@@ -49,7 +53,7 @@ function add_tooth(comb, t_cols) {
   var new_idx = comb.teeth.length - 1,
       new_name = "tooth_" + new_idx + ": ",
       new_elt = d3.select("#teeth")
-                  .append("div")
+                  .append("span")
                   .attr("id", "tooth_" + new_idx + "_container");
   new_elt.append("span")
     .attr("id", "tooth_" + new_idx + "_label")
