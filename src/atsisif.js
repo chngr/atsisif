@@ -204,11 +204,13 @@ function draw_graph() {
   d3.select("#upper_weight").on("input", function() {
     GRAPH.upper_weight = this.value;
     d3.select("#upper_weight").property("value", this.value);
+    d3.select("#upper_weight_value").text(this.value / 100);
     update_weight();
   });
   d3.select("#lower_weight").on("input", function() {
     GRAPH.lower_weight = this.value;
     d3.select("#lower_weight").property("value", this.value);
+    d3.select("#lower_weight_value").text(this.value / 100);
     update_weight();
   });
 
