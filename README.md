@@ -18,6 +18,12 @@ No restrictions are currently in place making sure that the handle sets and the
 teeth are valid. In particular, nothing checks that a selection is actually a
 comb.
 
+## How to Run
+
+You could either open ```index.html``` directly in your browser, and things
+should run. Alternatively, you could start a web server at the root of the
+directory and serve it locally.
+
 ## Misc Notes
 1. Cycles consisting entirely of fractional nodes seem to be a good sign that
    there is a violated comb inequality nearby. Specifically, if one takes a

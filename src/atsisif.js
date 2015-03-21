@@ -49,7 +49,7 @@ function add_tooth(comb, t_cols) {
   var new_idx = comb.teeth.length - 1,
       new_name = "tooth_" + new_idx + ": ",
       new_elt = d3.select("#teeth")
-                  .append("p")
+                  .append("div")
                   .attr("id", "tooth_" + new_idx + "_container");
   new_elt.append("span")
     .attr("id", "tooth_" + new_idx + "_label")
@@ -145,7 +145,7 @@ function draw_graph() {
   var link = vis.append("g").attr("class", "link").selectAll("line"),
       node = vis.append("g").attr("class", "node").selectAll("circle");
 
-  d3.json("/data/c.json", function(err, g) {
+  d3.json("data/c.json", function(err, g) {
     var n = g.nodes, nodes = [];
     for(var i = 0; i < n; i++) { nodes.push({name: i}); }
     GRAPH = g;
@@ -189,7 +189,9 @@ function draw_graph() {
     });
     link = link.data(GRAPH.a_edges);
     link.exit().remove();
-    link.enter().insert("line").style("stroke", function(d) { return colour(d.value); })
+    link.enter().insert("line")
+      .attr("class",  "link")
+      .style("stroke", function(d) { return colour(d.weight); });
     node = node.data(GRAPH.nodes);
     node.exit().remove();
     node.enter().insert("circle")
