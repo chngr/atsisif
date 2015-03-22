@@ -3,7 +3,7 @@ var KEYCODE = {'h': 72, 'c': 67, 't': 84, 'n': 78, 'b': 66, 'd': 68, 'a': 65},
     GRAPH = {};
 
 function contract_edges(graph) {
-  var c_edges = [], node_flags = [], nodes = [],
+  var c_edges = [], f_edges = [], node_flags = [], nodes = [],
       in_path = false,
       e, p, i, j;
   for(e of graph.edges) {
@@ -29,11 +29,12 @@ function contract_edges(graph) {
         c_edges.push({ source: e.source, target: e.target, value: 1, weight: 1});
       }
     } else {
-      c_edges.push({ source: e.source, target: e.target, value: e.value, weight: e.weight});
+      f_edges.push({ source: e.source, target: e.target, value: e.value, weight: e.weight});
     }
   }
+  var edges = c_edges.concat(f_edges);
   for(i = 0; i < graph.nodes.length; i++) { node_flags.push(0); }
-  for(e of c_edges) {
+  for(e of edges) {
     node_flags[e.source] = 1;
     node_flags[e.target] = 1;
   }
@@ -44,11 +45,11 @@ function contract_edges(graph) {
       j += 1;
     }
   }
-  for(e of c_edges) {
+  for(e of edges) {
     e.source = node_flags[e.source];
     e.target = node_flags[e.target];
   }
-  return {nodes: nodes, edges: c_edges};
+  return {nodes: nodes, edges: edges};
 }
 
 function toggle(t) {
