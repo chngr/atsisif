@@ -14,8 +14,8 @@
     <title>All the Same, I Saw it First</title>
   </head>
   <body>
-    <label for="upper_weight">Upper Threshold: </label><input type="range" min="0" max="100" id="upper_weight" value="100"><span id="upper_weight_value">1</span>
-    <label for="lower_weight">Lower Threshold: </label><input type="range" min="0" max="100" id="lower_weight" value="0"><span id="lower_weight_value">0</span>
+    <label for="upper_value">Upper Threshold: </label><input type="range" min="0" max="100" id="upper_value" value="100"><span id="upper_value_value">1</span>
+    <label for="lower_value">Lower Threshold: </label><input type="range" min="0" max="100" id="lower_value" value="0"><span id="lower_value_value">0</span>
     <div>Toggle: <span id="handle_toggle">Handle</span> <span id="tooth_toggle">Teeth</span></div>
     <div>
       <span>Handle nodes: </span><span id="handle_nodes"></span>
@@ -26,6 +26,7 @@
       <span>Weight Sum: </span><span id="comb_weight_sum"></span><br/>
       <span>RHS - LHS: </span><span id="comb_difference"></span><br/>
     </div>
+    <button id="contract" type="button">Contract</button>
     <div align="center" id="force_graph"></div>
     <script src="lib/d3.min.js" charset="utf-8"></script>
     <script src="src/atsisif.js"></script>

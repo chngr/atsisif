@@ -2,6 +2,55 @@ var KEYCODE = {'h': 72, 'c': 67, 't': 84, 'n': 78, 'b': 66, 'd': 68, 'a': 65},
     TOGGLES = {'handle': false, 'tooth': false},
     GRAPH = {};
 
+function contract_edges(graph) {
+  var c_edges = [], node_flags = [], nodes = [],
+      in_path = false,
+      e, p, i, j;
+  for(e of graph.edges) {
+    in_path = false;
+    if(e.value == 1) {
+      for(p of c_edges) {
+        if(e.source == p.source) {
+          p.source = e.target;
+          in_path = true;
+        } else if(e.source == p.target) {
+          p.target = e.target;
+          in_path = true;
+        } else if(e.target == p.source) {
+          p.source = e.source;
+          in_path = true;
+        } else if(e.target == p.target) {
+          p.target = e.source;
+          in_path = true;
+        }
+        if(in_path) { break; }
+      }
+      if(!in_path) {
+        c_edges.push({ source: e.source, target: e.target, value: 1, weight: 1});
+      }
+    } else {
+      c_edges.push({ source: e.source, target: e.target, value: e.value, weight: e.weight});
+    }
+  }
+  for(i = 0; i < graph.nodes.length; i++) { node_flags.push(0); }
+  for(e of c_edges) {
+    node_flags[e.source] = 1;
+    node_flags[e.target] = 1;
+  }
+  for(i = 0, j = 0; i < graph.nodes.length; i++) {
+    if(node_flags[i]) {
+      nodes.push({name: j});
+      node_flags[i] = j;
+      j += 1;
+    }
+  }
+  for(e of c_edges) {
+    e.source = node_flags[e.source];
+    e.target = node_flags[e.target];
+  }
+  return {nodes: nodes, edges: c_edges};
+}
+
 function toggle(t) {
   var toggle_keys = Object.keys(TOGGLES), key, i;
   for(i in toggle_keys) {
@@ -90,9 +139,8 @@ function get_delta_weight(V) {
   return val;
 }
 
-function draw_graph() {
+function draw_graph(data) {
   var width = 1000, height = 600,
-      edges = [],
       comb = {
         handle: [],
         teeth: [],
@@ -152,22 +200,18 @@ function draw_graph() {
   d3.json("data/c.json", function(err, g) {
     var n = g.nodes, nodes = [];
     for(var i = 0; i < n; i++) { nodes.push({name: i}); }
-    GRAPH = g;
-    GRAPH.nodes = nodes;
+    GRAPH = contract_edges({nodes: nodes, edges: g.edges});
     GRAPH.a_edges = GRAPH.edges;
-    GRAPH.upper_weight = 100;
-    GRAPH.lower_weight = 0;
+    GRAPH.upper_value = 100;
+    GRAPH.lower_value = 0;
 
-    force.nodes(nodes).links(GRAPH.a_edges).start();
-    edges = force.links().map(function(e) {
-      return {a: e.source.index, b: e.target.index, weight: e.value };
-    });
+    force.nodes(GRAPH.nodes).links(GRAPH.a_edges).start();
 
-    link = link.data(GRAPH.edges)
+    link = link.data(GRAPH.a_edges)
                .enter().append("line")
                .attr("class", "link")
                .style("stroke", function (d) { return colour(d.value); });
-    node = node.data(nodes)
+    node = node.data(GRAPH.nodes)
                .enter().append("circle")
                .attr("class", "node")
                .attr("r", 2)
@@ -186,16 +230,16 @@ function draw_graph() {
   });
 
 
-  function update_weight() {
+  function update_value() {
     GRAPH.a_edges = GRAPH.edges.filter(function(e) {
       var ewt = 100 * e.value
-      return GRAPH.lower_weight <= ewt && ewt <= GRAPH.upper_weight ? true : false;
+      return GRAPH.lower_value <= ewt && ewt <= GRAPH.upper_value ? true : false;
     });
     link = link.data(GRAPH.a_edges);
     link.exit().remove();
     link.enter().insert("line")
       .attr("class",  "link")
-      .style("stroke", function(d) { return colour(d.weight); });
+      .style("stroke", function(d) { return colour(d.value); });
     node = node.data(GRAPH.nodes);
     node.exit().remove();
     node.enter().insert("circle")
@@ -205,17 +249,18 @@ function draw_graph() {
         .on("click", node_click);
     force.nodes(GRAPH.nodes).links(GRAPH.a_edges).start();
   }
-  d3.select("#upper_weight").on("input", function() {
-    GRAPH.upper_weight = this.value;
-    d3.select("#upper_weight").property("value", this.value);
-    d3.select("#upper_weight_value").text(this.value / 100);
-    update_weight();
+
+  d3.select("#upper_value").on("input", function() {
+    GRAPH.upper_value = this.value;
+    d3.select("#upper_value").property("value", this.value);
+    d3.select("#upper_value_value").text(this.value / 100);
+    update_value();
   });
-  d3.select("#lower_weight").on("input", function() {
-    GRAPH.lower_weight = this.value;
-    d3.select("#lower_weight").property("value", this.value);
-    d3.select("#lower_weight_value").text(this.value / 100);
-    update_weight();
+  d3.select("#lower_value").on("input", function() {
+    GRAPH.lower_value = this.value;
+    d3.select("#lower_value").property("value", this.value);
+    d3.select("#lower_value_value").text(this.value / 100);
+    update_value();
   });
 
   /* Event handlers */
