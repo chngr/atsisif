@@ -198,7 +198,7 @@ function draw_graph(data) {
   var link = vis.append("g").attr("class", "link").selectAll("line"),
       node = vis.append("g").attr("class", "node").selectAll("circle");
 
-  d3.json("data/c.json", function(err, g) {
+  d3.json("data/e.json", function(err, g) {
     var n = g.nodes, nodes = [];
     for(var i = 0; i < n; i++) { nodes.push({name: i}); }
     GRAPH = contract_edges({nodes: nodes, edges: g.edges});
@@ -319,8 +319,8 @@ function draw_graph(data) {
           }
         }
       }
-      update_display(comb);
     }
+    update_display(comb);
   }
 
   var node_drag = d3.behavior.drag()
