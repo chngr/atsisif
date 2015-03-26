@@ -57,7 +57,8 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     double **p_ewt)
 {
   FILE *f = NULL;
-  int i, end1, end2, w, rval = 0, ncount, ecount;
+  int i, end1, end2, rval = 0, ncount, ecount;
+  double w;
   int *elist = NULL;
   double *ewt = NULL;
 
@@ -88,7 +89,7 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     }
 
     for (i = 0; i < ecount; i++) {
-      if (fscanf(f,"%d %d %d",&end1, &end2, &w) != 3) {
+      if (fscanf(f,"%d %d %lf",&end1, &end2, &w) != 3) {
       fprintf (stderr, "%s has invalid input format\n", filename);
       rval = 1;  goto CLEANUP;
     }
