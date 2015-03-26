@@ -26,6 +26,7 @@ void comp_sizes(int ncount, int ncomps, int *comps, int *comp_sizes)
 void get_comps(graph *G, int *comps, int *ncomps, double lower, double upper)
 {
   int i;
+  *ncomps = 0;
   for (i = 0; i < G->ncount; i++) G->nodelist[i].mark = 0;
   for (i = 0; i < G->ncount; i++) {
     if (G->nodelist[i].mark == 0)
@@ -73,7 +74,7 @@ void free_graph (graph *G)
   }
 }
 
-int build_graph (int ncount, int ecount, int *elist, double *x, graph *G)
+int build_graph (int ncount, int ecount, int *elist, double *ewts, graph *G)
 {
   int rval = 0, i, a, b;
   node *n;
@@ -87,7 +88,7 @@ int build_graph (int ncount, int ecount, int *elist, double *x, graph *G)
   }
 
   G->elist= elist;
-  G->ewts = x;
+  G->ewts = ewts;
   for (i = 0; i < ncount; i++) G->nodelist[i].deg = 0;
   for (i = 0; i < ecount; i++) {
     a = elist[2*i];  b = elist[2*i+1];
@@ -121,11 +122,11 @@ CLEANUP:
   return rval;
 }
 
-int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
+int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
     double *y, graph *G)
 {
   int rval = 0, i, j, a, b, n_c = 0, n_f = 0, n = 0;
-  double *c_edges_x = NULL, *f_edges_x = NULL;
+  double *c_ewts = NULL, *f_ewts = NULL;
 
   int *nodes = malloc (ncount * sizeof (int)),
       *c_edges = malloc (2 * ecount * sizeof (int)),
@@ -135,17 +136,17 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
     fprintf(stderr, "out of memory for c_edges or f_edges\n");
     rval = 1; goto CLEANUP;
   }
-  c_edges_x = malloc (ecount * sizeof (double));
-  f_edges_x = malloc (ecount * sizeof (double));
-  if(!c_edges_x || !f_edges_x) {
-    fprintf(stderr, "out of memory for c_edges_x or f_edges_x\n");
+  c_ewts = malloc (ecount * sizeof (double));
+  f_ewts = malloc (ecount * sizeof (double));
+  if(!c_ewts || !f_ewts) {
+    fprintf(stderr, "out of memory for c_ewts or f_ewts\n");
     rval = 1; goto CLEANUP;
   }
 
   for(i = 0; i < ncount; i++) nodes[i] = 0;
   for(i = 0; i < ecount; i++) {
     a = elist[2*i]; b = elist[2*i+1];
-    if(1 - x[i] > LP_EPSILON) {
+    if(1 - ewts[i] > LP_EPSILON) {
       for(j = 0; j < n_c; j++) {
         if(a == c_edges[2*j]) {
           c_edges[2*j] = b; break;
@@ -159,12 +160,12 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
       }
       if(j == n_c) {
         c_edges[2*n_c] = a; c_edges[2*n_c+1] = b;
-        c_edges_x[n_c] = x[i];
+        c_ewts[n_c] = ewts[i];
         n_c++;
       }
     } else {
       f_edges[2*n_f] = a; f_edges[2*n_f+1] = b;
-      f_edges_x[n_f] = x[i];
+      f_ewts[n_f] = ewts[i];
       n_f++;
       if(!nodes[a]) { nodes[a] = 1; n++; }
       if(!nodes[b]) { nodes[b] = 1; n++; }
@@ -196,12 +197,12 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
   for(i = 0, j = 0; i < n_c; i++, j++) {
     c_elist[2*j] = nodes[c_edges[2*i]];
     c_elist[2*j+1] = nodes[c_edges[2*i+1]];
-    y[j] = c_edges_x[i];
+    y[j] = c_ewts[i];
   }
   for(i = 0; i < n_f; i++, j++) {
     c_elist[2*j] = nodes[f_edges[2*i]];
     c_elist[2*j+1] = nodes[f_edges[2*i+1]];
-    y[j] = f_edges_x[i];
+    y[j] = f_ewts[i];
   }
 
   rval = build_graph(n, n_c + n_f, c_elist, y, G);
@@ -212,8 +213,8 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
 CLEANUP:
   if(c_edges) free(c_edges);
   if(f_edges) free(f_edges);
-  if(c_edges_x) free(c_edges_x);
-  if(f_edges_x) free(f_edges_x);
+  if(c_ewts) free(c_ewts);
+  if(f_ewts) free(f_ewts);
   if(nodes) free(nodes);
   if(c_elist) free(c_elist);
   return rval;

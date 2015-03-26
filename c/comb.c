@@ -3,14 +3,14 @@
 #include "comb.h"
 #include "graph.h"
 
-int valid_comb (comb *C);
-int violating_comb (comb *C);
-int comps_to_combs(graph *C, int ncomps, int *comps, comb *clist, double t_thresh);
-void destroy_comb(comb *C);
+int valid_comb (comb C);
+int violating_comb (comb C);
+int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs, comb *clist, double t_thresh);
+void destroy_comb(comb C);
 
-int comps_to_combs(graph *G, int ncomps, int *comps, comb *clist, double t_thresh)
+int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs, comb *clist, double t_thresh)
 {
-  int rval = 0, i, j, k, l, m, ncombs = 0, nteeth;
+  int rval = 0, i, j, k, l, m, nteeth;
   node node;
   int *c_sizes = malloc (ncomps * sizeof (int)),
       *tmp_ts  = malloc (G->ecount * sizeof (int));
@@ -19,17 +19,18 @@ int comps_to_combs(graph *G, int ncomps, int *comps, comb *clist, double t_thres
     rval = 1; goto CLEANUP;
   }
 
+  *ncombs = 0;
   comp_sizes(G->ncount, ncomps, comps, c_sizes);
   for (i = 0; i < ncomps; i++) {
-    if (c_sizes[i] > 2) ncombs++;
+    if (c_sizes[i] > 2) (*ncombs)++;
   }
 
-  clist = malloc (ncombs * sizeof (comb));
+  clist = malloc ((*ncombs) * sizeof (comb));
   if (!clist) {
     fprintf(stderr, "not enough memory for clist\n");
     rval = 1; goto CLEANUP;
   }
-  for (i = 0; i < ncombs; i++) clist[i].G = G;
+  for (i = 0; i < *ncombs; i++) clist[i].G = G;
 
   for (i = 0, j = 0; i < ncomps; i++) {
     if (c_sizes[i] > 2) continue;
@@ -66,53 +67,51 @@ CLEANUP:
   return rval;
 }
 
-int valid_comb(comb *C)
+int valid_comb(comb C)
 {
   int i, j, a, b;
-  if (C->nhandle < 3) return 0;
-  if (2 * (C->nteeth/2) == C->nteeth) return 0;
+  if (C.nhandle < 3) return 0;
+  if (2 * (C.nteeth/2) == C.nteeth) return 0;
 
   /* Check disjointness of teeth */
-  for (i = 0; i < C->G->ncount; i++) C->G->nodelist[i].mark = 0;
-  for (i = 0, j = 1; i < C->nteeth; i++) {
-    a = C->G->elist[2*C->teethedges[i]]; b = C->G->elist[2*C->teethedges[i]+1];
-    if (C->G->nodelist[a].mark != 0 || C->G->nodelist[b].mark != 0) return 0;
-    C->G->nodelist[a].mark = j; C->G->nodelist[b].mark = j;
+  for (i = 0; i < C.G->ncount; i++) C.G->nodelist[i].mark = 0;
+  for (i = 0, j = 1; i < C.nteeth; i++) {
+    a = C.G->elist[2*C.teethedges[i]]; b = C.G->elist[2*C.teethedges[i]+1];
+    if (C.G->nodelist[a].mark != 0 || C.G->nodelist[b].mark != 0) return 0;
+    C.G->nodelist[a].mark = j; C.G->nodelist[b].mark = j;
   }
   return 1;
 }
 
-int violating_comb (comb *C)
+int violating_comb (comb C)
 {
   int i, j;
   node node;
-  double rhs = (double) 3 * C->nhandle + 1,
+  double rhs = (double) 3 * C.nhandle + 1,
          lhs = 0.0;
 
   /* Mark the nodes appearing in the handle */
-  for (i = 0; i < C->G->ncount; i++) C->G->nodelist[i].mark = 0;
-  for (i = 0; i < C->nhandle; i++) C->G->nodelist[C->handlenodes[i]].mark = 1;
+  for (i = 0; i < C.G->ncount; i++) C.G->nodelist[i].mark = 0;
+  for (i = 0; i < C.nhandle; i++) C.G->nodelist[C.handlenodes[i]].mark = 1;
 
   /* Contributions from handle */
-  for (i = 0; i < C->nhandle; i++) {
-    node = C->G->nodelist[C->handlenodes[i]];
+  for (i = 0; i < C.nhandle; i++) {
+    node = C.G->nodelist[C.handlenodes[i]];
     for (j = 0; j < node.deg; j++) {
-      if (!C->G->nodelist[node.adj[j].n].mark)
-        lhs += C->G->ewts[node.adj[j].e];
+      if (!C.G->nodelist[node.adj[j].n].mark)
+        lhs += C.G->ewts[node.adj[j].e];
     }
   }
 
   /* Contributions from teeth */
-  for (i = 0; i < C->nteeth; i++) {
-    lhs += 4.0 - C->G->ewts[C->teethedges[i]]; // Using degree constraints
+  for (i = 0; i < C.nteeth; i++) {
+    lhs += 4.0 - C.G->ewts[C.teethedges[i]]; // Using degree constraints
   }
   return lhs < rhs;
 }
 
-void destroy_comb (comb *C)
+void destroy_comb (comb C)
 {
-  if(C) {
-    if(C->handlenodes) free (C->handlenodes);
-    if(C->teethedges) free (C->teethedges);
-  }
+  if(C.handlenodes) free (C.handlenodes);
+  if(C.teethedges) free (C.teethedges);
 }
