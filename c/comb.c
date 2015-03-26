@@ -85,7 +85,7 @@ int valid_comb(comb *C)
 int violating_comb (comb *C)
 {
   int i, j;
-  node *node;
+  node node;
   double rhs = (double) 3 * C->nhandle + 1,
          lhs = 0.0;
 
@@ -95,10 +95,10 @@ int violating_comb (comb *C)
 
   /* Contributions from handle */
   for (i = 0; i < C->nhandle; i++) {
-    *node = C->G->nodelist[C->handlenodes[i]];
-    for (j = 0; j < node->deg; j++) {
-      if (!C->G->nodelist[node->adj[j].n].mark)
-        lhs += C->G->ewts[node->adj[j].e];
+    node = C->G->nodelist[C->handlenodes[i]];
+    for (j = 0; j < node.deg; j++) {
+      if (!C->G->nodelist[node.adj[j].n].mark)
+        lhs += C->G->ewts[node.adj[j].e];
     }
   }
 

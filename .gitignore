@@ -3,3 +3,5 @@
 *.swp
 *.swx
 .DS_STORE
+*.o
+comb_separation

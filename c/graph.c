@@ -11,38 +11,6 @@ void get_comps(graph *G, int *comps, int *ncomps, double lower, double upper);
 void comp_sizes(int ncount, int ncomps, int *comps, int *comp_sizes);
 void dfs (int n, graph *G, int comp, int *comps, double lower, double upper);
 
-int make_combs(graph *G, double *x, int ncomps, int *comps, int *comp_sizes, int **handles)
-{
-  int rval = 0, i, j, c;
-
-  handles = malloc (ncomps * sizeof (int *));
-  if(!handles) {
-    fprintf(stderr, "not enough memory for handles\n");
-    rval = 1; goto CLEANUP;
-  }
-  int *handle_sizes = malloc (ncomps * sizeof (int));
-  if (!handle_sizes) {
-    fprintf(stderr, "not enough memory for handle_sizes\n");
-    rval = 1; goto CLEANUP;
-  }
-  for (i = 0; i < ncomps; i++) {
-    handles[i] = malloc (comp_sizes[i] * sizeof (int));
-    if(!handles[i]) {
-      fprintf(stderr, "not enough memory for handles[%d]\n", i);
-      rval = 1; goto CLEANUP;
-    }
-  }
-
-  for (i = 0; i < G->ncount; i++) {
-    c = comps[i];
-    handles[c][handle_sizes[c]] = i;
-    handle_sizes[c]++;
-  }
-CLEANUP:
-  if(handle_sizes) free(handle_sizes);
-  return rval;
-}
-
 void comp_sizes(int ncount, int ncomps, int *comps, int *comp_sizes)
 {
   int i, j, n;
@@ -154,20 +122,21 @@ CLEANUP:
 }
 
 int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
-    double* y, graph *G)
+    double *y, graph *G)
 {
   int rval = 0, i, j, a, b, n_c = 0, n_f = 0, n = 0;
+  double *c_edges_x = NULL, *f_edges_x = NULL;
 
   int *nodes = malloc (ncount * sizeof (int)),
       *c_edges = malloc (2 * ecount * sizeof (int)),
-      *f_edges = malloc (2 * ecount * sizeof (int));
+      *f_edges = malloc (2 * ecount * sizeof (int)),
+      *c_elist = NULL;
   if(!c_edges || !f_edges) {
     fprintf(stderr, "out of memory for c_edges or f_edges\n");
     rval = 1; goto CLEANUP;
   }
-
-  double *c_edges_x = malloc (ecount * sizeof (double)),
-         *f_edges_x = malloc (ecount * sizeof (double));
+  c_edges_x = malloc (ecount * sizeof (double));
+  f_edges_x = malloc (ecount * sizeof (double));
   if(!c_edges_x || !f_edges_x) {
     fprintf(stderr, "out of memory for c_edges_x or f_edges_x\n");
     rval = 1; goto CLEANUP;
@@ -219,7 +188,7 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *x,
     fprintf(stderr, "not enough memory for y\n");
     rval = 1; goto CLEANUP;
   }
-  int *c_elist = malloc (2*(n_c + n_f) * sizeof (int));
+  c_elist = malloc (2*(n_c + n_f) * sizeof (int));
   if(!c_elist) {
     fprintf(stderr, "not enough memory for c_elist\n");
     rval = 1; goto CLEANUP;

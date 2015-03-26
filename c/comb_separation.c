@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <math.h>
-#include "heap.h"
 #include "graph.h"
 #include "util.h"
 

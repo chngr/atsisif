@@ -1,5 +1,6 @@
 #ifndef __COMB_H
 #define __COMB_H
+#include "graph.h"
 
 typedef struct comb {
   graph *G;         /* Supergraph containing comb */
