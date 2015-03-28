@@ -71,18 +71,21 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
     rval = 1; goto CLEANUP;
   }
   // TODO: Find method to set these lower and upper values
-  lower = 0.01; upper = 0.95;
+  lower = 0.05; upper = 0.95;
   get_comps(&G, comps, &ncomps, lower, upper);
 
   // TODO: Find method to set t_thresh.
-  t_thresh = 0.99;
+  t_thresh = 0.10;
   comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh);
   for (i = 0; i < ncombs; i++) {
     if (valid_comb(clist[i]) && violating_comb(clist[i])) {
       printf("found violating comb with |H| = %d and %d teeth\n", clist[i]->nhandle, clist[i]->nteeth);
       for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
       printf("\n");
-      for (j = 0; j < clist[i]->nteeth; j++) printf("%d ", clist[i]->teethedges[j]);
+      for (j = 0; j < clist[i]->nteeth; j++) {
+        int k = clist[i]->teethedges[j];
+        printf("%d %d %.2f\n", clist[i]->G->elist[2*k], clist[i]->G->elist[2*k+1], clist[i]->G->ewts[k]);
+      }
       printf("\n");
     }
   }

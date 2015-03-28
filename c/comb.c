@@ -103,7 +103,7 @@ int violating_comb (comb *C)
 {
   int i, j;
   node node;
-  double rhs = (double) 3 * C->nhandle + 1,
+  double rhs = 3.0 * ((double) C->nteeth) + 1.0,
          lhs = 0.0;
 
   /* Mark the nodes appearing in the handle */
