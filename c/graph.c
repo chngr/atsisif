@@ -80,15 +80,15 @@ int build_graph (int ncount, int ecount, int *elist, double *ewts, graph *G)
   node *n;
   adjobj *p;
 
-  G->nodelist = (node *) malloc (ncount * sizeof (node));
-  G->adjspace = (adjobj *) malloc (2 * ecount * sizeof (node));
+  G->nodelist = malloc (ncount * sizeof (node));
+  G->adjspace = malloc (2 * ecount * sizeof (node));
   if (!G->nodelist || !G->adjspace) {
     fprintf (stderr, "out of memory for nodelist or adjspace\n");
     rval = 1; goto CLEANUP;
   }
 
-  G->elist= elist;
-  G->ewts = ewts;
+  G->elist = elist;
+  G->ewts  = ewts;
   for (i = 0; i < ncount; i++) G->nodelist[i].deg = 0;
   for (i = 0; i < ecount; i++) {
     a = elist[2*i];  b = elist[2*i+1];
@@ -125,15 +125,15 @@ CLEANUP:
 int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
     double *y, graph *G)
 {
-  int rval = 0, i, j, a, b, n_c = 0, n_f = 0, n = 0;
+  int rval = 0, i = 0, j = 0, a, b, n_c = 0, n_f = 0, n = 0;
   double *c_ewts = NULL, *f_ewts = NULL;
+  int *c_elist = NULL;
 
   int *nodes = malloc (ncount * sizeof (int)),
       *c_edges = malloc (2 * ecount * sizeof (int)),
-      *f_edges = malloc (2 * ecount * sizeof (int)),
-      *c_elist = NULL;
-  if(!c_edges || !f_edges) {
-    fprintf(stderr, "out of memory for c_edges or f_edges\n");
+      *f_edges = malloc (2 * ecount * sizeof (int));
+  if(!c_edges || !f_edges || !nodes) {
+    fprintf(stderr, "out of memory for c_edges or f_edges or nodes\n");
     rval = 1; goto CLEANUP;
   }
   c_ewts = malloc (ecount * sizeof (double));
@@ -175,6 +175,11 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
   /* Find then reindex the nodes used */
   for(i = 0; i < n_c; i++) {
     a = c_edges[2*i]; b = c_edges[2*i+1];
+    if(!nodes[a]) { nodes[a] = 1; n++; }
+    if(!nodes[b]) { nodes[b] = 1; n++; }
+  }
+  for(i = 0; i < n_f; i++) {
+    a = f_edges[2*i]; b = c_edges[2*i+1];
     if(!nodes[a]) { nodes[a] = 1; n++; }
     if(!nodes[b]) { nodes[b] = 1; n++; }
   }

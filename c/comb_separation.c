@@ -10,6 +10,8 @@ static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist, do
 static int parseargs (int ac, char **av);
 static void usage (char *f);
 
+static int find_combs(int ncount, int ecount, int *elist, double *ewts);
+
 static char *fname = (char *) NULL;
 static int seed = 0;
 
@@ -17,7 +19,7 @@ int main (int ac, char **av)
 {
   int rval  = 0, ncount = 0, ecount = 0;
   int *elist = NULL;
-  double *ewt = NULL;
+  double *ewts = NULL;
   double szeit;
 
   seed = (int) CO759_real_zeit ();
@@ -34,16 +36,18 @@ int main (int ac, char **av)
 
   if (fname) printf ("Problem name: %s\n", fname);
 
-  rval = getprob (fname, &ncount, &ecount, &elist, &ewt);
+  rval = getprob (fname, &ncount, &ecount, &elist, &ewts);
   if (rval) { fprintf (stderr, "getprob failed\n"); goto CLEANUP; }
 
   szeit = CO759_zeit ();
+  rval = find_combs(ncount, ecount, elist, ewts);
+  if (rval) { fprintf (stderr, "find_combs failed\n"); goto CLEANUP; }
   printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
   fflush (stdout);
 
 CLEANUP:
   if (elist) free (elist);
-  if (ewt) free (ewt);
+  if (ewts) free (ewts);
   return rval;
 }
 
@@ -51,10 +55,11 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
 {
   int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0;
   double *y = NULL, lower, upper, t_thresh;
-  graph *G = NULL;
-  comb *clist = NULL;
-  init_graph(G);
-  rval = build_contracted_graph(ncount, ecount, elist, ewts, y, G);
+  graph G;
+  comb **clist = NULL;
+  init_graph(&G);
+  rval = build_contracted_graph(ncount, ecount, elist, ewts, y, &G);
+
   if (rval) {
     fprintf(stderr, "build_contracted_graph failed\n");
     rval = 1; goto CLEANUP;
@@ -67,25 +72,23 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
   }
   // TODO: Find method to set these lower and upper values
   lower = 0.01; upper = 0.95;
-  printf("Looking for combs with thresholds %.2f & %.2f\n", lower, upper);
-  get_comps(G, comps, &ncomps, lower, upper);
+  get_comps(&G, comps, &ncomps, lower, upper);
 
   // TODO: Find method to set t_thresh.
   t_thresh = 0.99;
-  comps_to_combs(G, ncomps, comps, &ncombs, clist, t_thresh);
+  comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh);
   for (i = 0; i < ncombs; i++) {
-    comb C = clist[i];
-    if (valid_comb(C) && violating_comb(C)) {
-      printf("found violating comb with |H| = %d and %d teeth\n", C.nhandle, C.nteeth);
-      for (j = 0; j < C.nhandle; j++) printf("%d ", C.handlenodes[j]);
+    if (valid_comb(clist[i]) && violating_comb(clist[i])) {
+      printf("found violating comb with |H| = %d and %d teeth\n", clist[i]->nhandle, clist[i]->nteeth);
+      for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
       printf("\n");
-      for (j = 0; j < C.nteeth; j++) printf("%d ", C.teethedges[j]);
+      for (j = 0; j < clist[i]->nteeth; j++) printf("%d ", clist[i]->teethedges[j]);
       printf("\n");
     }
   }
 
 CLEANUP:
-  free_graph(G);
+  free_graph(&G);
   if(y) free (y);
   if(comps) free (comps);
   if(clist) {
