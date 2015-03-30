@@ -1,5 +1,5 @@
 *.edg
-*.x
+data/*.x
 *.swp
 *.swx
 .DS_STORE
