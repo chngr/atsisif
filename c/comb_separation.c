@@ -14,6 +14,9 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts);
 
 static char *fname = (char *) NULL;
 static int seed = 0;
+static double lower = 0.05;
+static double upper = 0.95;
+static double t_thresh = 0.5;
 
 int main (int ac, char **av)
 {
@@ -25,6 +28,7 @@ int main (int ac, char **av)
   seed = (int) CO759_real_zeit ();
 
   rval = parseargs (ac, av);
+  printf("upper: %.2f lower: %.2f\n", upper, lower);
   if (rval) goto CLEANUP;
 
   if (!fname) {
@@ -54,7 +58,7 @@ CLEANUP:
 static int find_combs(int ncount, int ecount, int *elist, double *ewts)
 {
   int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0, a, b;
-  double *y = NULL, lower, upper, t_thresh, szeit;
+  double *y = NULL, szeit;
   graph G;
   comb **clist = NULL;
   init_graph(&G);
@@ -73,14 +77,10 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
     fprintf(stderr, "not enough memory for comps\n");
     rval = 1; goto CLEANUP;
   }
-  // TODO: Find method to set these lower and upper values
-  lower = 0.3; upper = 0.7;
   szeit = CO759_zeit ();
   get_comps(&G, comps, &ncomps, lower, upper);
   printf ("Running Time for get_comps: %.2f seconds\n", CO759_zeit() - szeit);
 
-  // TODO: Find method to set t_thresh.
-  t_thresh = 0.30;
   szeit = CO759_zeit ();
   comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh);
   printf ("Running Time for comps_to_combs: %.2f seconds\n", CO759_zeit() - szeit);
@@ -191,15 +191,24 @@ static int parseargs (int ac, char **av)
     return 1;
   }
 
-  while ((c = getopt (ac, av, "ab:gk:s:")) != EOF) {
+  while ((c = getopt (ac, av, "l:u:t:s:")) != EOF) {
     switch (c) {
-    case 's':
-      seed = atoi (optarg);
-      break;
-    case '?':
-    default:
-      usage (av[0]);
-      return 1;
+      case 's':
+        seed = atoi (optarg);
+        break;
+      case 'l':
+        lower = atof (optarg);
+        break;
+      case 'u':
+        upper = atof (optarg);
+        break;
+      case 't':
+        t_thresh = atof (optarg);
+        break;
+      case '?':
+      default:
+        usage (av[0]);
+        return 1;
     }
   }
 
@@ -217,4 +226,7 @@ static void usage (char *f)
 {
   fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
   fprintf (stderr, "   -s d  random seed\n");
+  fprintf (stderr, "   -l f  set lower threshold for graph components\n");
+  fprintf (stderr, "   -u f  set upper threshold for graph components\n");
+  fprintf (stderr, "   -t f  set teeth threshold for comb candidates\n");
 }
