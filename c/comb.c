@@ -71,12 +71,10 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs, comb ***p_clis
     for (k = 0; k < nteeth; k++) clist[j]->teethedges[k] = tmp_ts[k] ;
     j++;
   }
-
-  for (i = 0; i < *ncombs; i++) {
-    printf("[Comb candidate %d] nhandle: %d, nteeth: %d\n", i, clist[i]->nhandle, clist[i]->nteeth);
-  }
   *p_clist = clist;
-
+  for (i = 0; i < *ncombs; i++) {
+    printf("[comb candidate %d] nhandle: %d nteeth: %d\n", i, clist[i]->nhandle, clist[i]->nteeth);
+  }
 CLEANUP:
   if (c_sizes) free (c_sizes);
   if (tmp_ts) free (tmp_ts);
@@ -121,8 +119,9 @@ int violating_comb (comb *C)
 
   /* Contributions from teeth */
   for (i = 0; i < C->nteeth; i++) {
-    lhs += 4.0 - C->G->ewts[C->teethedges[i]]; // Using degree constraints
+    lhs += 4.0 - 2*C->G->ewts[C->teethedges[i]]; // Using degree constraints
   }
+  if (lhs < rhs) printf("lhs: %.2f rhs: %.2f\n", lhs, rhs);
   return lhs < rhs;
 }
 

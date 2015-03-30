@@ -87,8 +87,16 @@ int build_graph (int ncount, int ecount, int *elist, double *ewts, graph *G)
     rval = 1; goto CLEANUP;
   }
 
-  G->elist = elist;
-  G->ewts  = ewts;
+  G->elist = malloc (2 * ecount * sizeof (int));
+  G->ewts  = malloc (ecount * sizeof (double));
+  if (!G->elist || !G->ewts) {
+    fprintf (stderr, "out of memory for elist or ewts\n");
+    rval = 1; goto CLEANUP;
+  }
+  for (i = 0; i < ecount; i++) {
+    G->elist[2*i] = elist[2*i]; G->elist[2*i+1] = elist[2*i+1];
+    G->ewts[i] = ewts[i];
+  }
   for (i = 0; i < ncount; i++) G->nodelist[i].deg = 0;
   for (i = 0; i < ecount; i++) {
     a = elist[2*i];  b = elist[2*i+1];
@@ -125,7 +133,7 @@ CLEANUP:
 int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
     double *y, graph *G)
 {
-  int rval = 0, i = 0, j = 0, a, b, n_c = 0, n_f = 0, n = 0;
+  int rval = 0, i = 0, j = 0, a, b, n_c = 0, n_f = 0, n = 0, in_path = 0;
   double *c_ewts = NULL, *f_ewts = NULL;
   int *c_elist = NULL;
 
@@ -146,19 +154,21 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
   for(i = 0; i < ncount; i++) nodes[i] = 0;
   for(i = 0; i < ecount; i++) {
     a = elist[2*i]; b = elist[2*i+1];
-    if(1 - ewts[i] > LP_EPSILON) {
+    if(1.0 - ewts[i] < LP_EPSILON) {
+      in_path = 0;
       for(j = 0; j < n_c; j++) {
         if(a == c_edges[2*j]) {
-          c_edges[2*j] = b; break;
+          c_edges[2*j] = b; in_path = 1;
         } else if(a == c_edges[2*j+1]) {
-          c_edges[2*j+1] = b; break;
+          c_edges[2*j+1] = b; in_path = 1;
         } else if(b == c_edges[2*j]) {
-          c_edges[2*j] = a; break;
+          c_edges[2*j] = a; in_path = 1;
         } else if(b == c_edges[2*j+1]) {
-          c_edges[2*j+1] = a; break;
+          c_edges[2*j+1] = a; in_path = 1;
         }
+        if(in_path) break;
       }
-      if(j == n_c) {
+      if(!in_path) {
         c_edges[2*n_c] = a; c_edges[2*n_c+1] = b;
         c_ewts[n_c] = ewts[i];
         n_c++;
@@ -175,11 +185,6 @@ int build_contracted_graph(int ncount, int ecount, int *elist, double *ewts,
   /* Find then reindex the nodes used */
   for(i = 0; i < n_c; i++) {
     a = c_edges[2*i]; b = c_edges[2*i+1];
-    if(!nodes[a]) { nodes[a] = 1; n++; }
-    if(!nodes[b]) { nodes[b] = 1; n++; }
-  }
-  for(i = 0; i < n_f; i++) {
-    a = f_edges[2*i]; b = c_edges[2*i+1];
     if(!nodes[a]) { nodes[a] = 1; n++; }
     if(!nodes[b]) { nodes[b] = 1; n++; }
   }

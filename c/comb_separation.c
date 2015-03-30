@@ -53,12 +53,15 @@ CLEANUP:
 
 static int find_combs(int ncount, int ecount, int *elist, double *ewts)
 {
-  int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0;
-  double *y = NULL, lower, upper, t_thresh;
+  int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0, a, b;
+  double *y = NULL, lower, upper, t_thresh, szeit;
   graph G;
   comb **clist = NULL;
   init_graph(&G);
+  szeit = CO759_zeit ();
   rval = build_contracted_graph(ncount, ecount, elist, ewts, y, &G);
+  printf ("Running Time for build_contracted_graph: %.2f seconds\n", CO759_zeit() - szeit);
+  printf("Graph nodes: %d Graph edges: %d\n", G.ncount, G.ecount);
 
   if (rval) {
     fprintf(stderr, "build_contracted_graph failed\n");
@@ -71,17 +74,37 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
     rval = 1; goto CLEANUP;
   }
   // TODO: Find method to set these lower and upper values
-  lower = 0.05; upper = 0.95;
+  lower = 0.3; upper = 0.7;
+  szeit = CO759_zeit ();
   get_comps(&G, comps, &ncomps, lower, upper);
+  printf ("Running Time for get_comps: %.2f seconds\n", CO759_zeit() - szeit);
 
   // TODO: Find method to set t_thresh.
-  t_thresh = 0.10;
+  t_thresh = 0.30;
+  szeit = CO759_zeit ();
   comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh);
+  printf ("Running Time for comps_to_combs: %.2f seconds\n", CO759_zeit() - szeit);
   for (i = 0; i < ncombs; i++) {
     if (valid_comb(clist[i]) && violating_comb(clist[i])) {
-      printf("found violating comb with |H| = %d and %d teeth\n", clist[i]->nhandle, clist[i]->nteeth);
+      printf("Found violating comb with |H| = %d and %d teeth\n", clist[i]->nhandle, clist[i]->nteeth);
+
+      for (j = 0; j < clist[i]->G->ncount; j++)
+        clist[i]->G->nodelist[j].mark = 0;
+      for (j = 0; j < clist[i]->nhandle; j++)
+        clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
+
+      printf("[Handle Nodes]\n");
       for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
       printf("\n");
+
+      printf("[Handle Edges]\n");
+      for (j = 0; j < clist[i]->G->ecount; j++) {
+        a = clist[i]->G->elist[2*j]; b = clist[i]->G->elist[2*j+1];
+        if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
+          printf("%d %d %.2f\n", a, b, clist[i]->G->ewts[j]);
+      }
+
+      printf("[Teeth]\n");
       for (j = 0; j < clist[i]->nteeth; j++) {
         int k = clist[i]->teethedges[j];
         printf("%d %d %.2f\n", clist[i]->G->elist[2*k], clist[i]->G->elist[2*k+1], clist[i]->G->ewts[k]);
