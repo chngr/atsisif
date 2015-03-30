@@ -6,7 +6,7 @@ comb: $(COMBOBS)
 	  $(CC) $(CFLAGS) -Wl,-no_compact_unwind -o comb_separation $(COMBOBS) -lm -lpthread
 
 clean:
-	rm -f *.o comb
+	rm -f *.o comb_separation
 
 comb_separation.o: comb_separation.c util.h
 comb.o: comb.c comb.h
