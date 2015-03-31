@@ -5,3 +5,9 @@ data/*.x
 .DS_STORE
 *.o
 comb_separation
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.pdf
+*.pdfsync

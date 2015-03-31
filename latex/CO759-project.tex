@@ -1,0 +1,289 @@
+\documentclass[11pt, letterpaper]{amsart}
+\usepackage{mathtools, stmaryrd, wasysym}
+\usepackage{pdfsync,url, mathrsfs}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+  \theoremstyle{plain}
+  \newtheorem{Theorem}{Theorem}
+  \newtheorem{Lemma}[Theorem]{Lemma}
+  \newtheorem{Corollary}[Theorem]{Corollary}
+  \newtheorem{Proposition}[Theorem]{Proposition}
+  \theoremstyle{definition}
+  \newtheorem{defn}[Theorem]{Definition}
+  \newtheorem{Example}[Theorem]{Example}
+  \theoremstyle{remark}
+  \newtheorem{Remark}[Theorem]{Remark}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\linespread{1.05} % following Ian Morrison
+\renewcommand{\familydefault}{pplx}
+\renewcommand{\rmdefault}{pplx}
+\usepackage[euler-digits,small]{eulervm}
+\usepackage[utf8]{inputenc}
+\usepackage[tracking]{microtype}
+\usepackage{stackrel,braket}
+\usepackage{tikz-cd}
+
+\setlength{\oddsidemargin}{0cm} \setlength{\evensidemargin}{0cm}
+\setlength{\marginparwidth}{0in}
+\setlength{\marginparsep}{0in}
+\setlength{\marginparpush}{0in}
+\setlength{\topmargin}{0in}
+\setlength{\headheight}{0pt}
+\setlength{\headsep}{20pt}
+\setlength{\footskip}{.3in}
+%\setlength{\textheight}{9.2in}
+\setlength{\textheight}{8.8in}
+\setlength{\textwidth}{6.5in}
+\setlength{\parskip}{4pt}
+
+\renewcommand{\qedsymbol}{$\blacksquare$}
+\newcommand{\done}{/\!\!\!/}
+\makeatletter
+\newcommand*{\coloneqq}{\mathrel{\rlap{%
+           \raisebox{0.3ex}{$\m@th\cdot$}}%
+           \raisebox{-0.3ex}{$\m@th\cdot$}}%
+           =}
+\makeatother
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\inner}{\langle}{\rangle}
+\DeclarePairedDelimiter{\agen}{\langle}{\rangle}
+
+
+\DeclareMathOperator{\Conv}{Conv}
+\DeclareMathOperator{\Int}{int}
+\DeclareMathOperator{\Relint}{relint}
+\DeclareMathOperator{\Ext}{Ext}
+\DeclareMathOperator{\Simple}{Simple}
+\DeclareMathOperator{\Poly}{Poly}
+\DeclareMathOperator{\Rank}{Rank}
+\DeclareMathOperator{\Real}{Real}
+\DeclareMathOperator{\Aff}{Aff}
+\DeclareMathOperator{\Vol}{vol}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Ric}{Ric}
+\DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\trdeg}{tr\,deg}
+\DeclareMathOperator{\Kdim}{Kdim}
+\DeclareMathOperator{\GKdim}{GKdim}
+\DeclareMathOperator{\Frac}{Frac}
+\DeclareMathOperator{\Ann}{Ann}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\sgn}{sign}
+\DeclareMathOperator*{\esssup}{ess\,sup}
+\DeclareMathOperator{\coker}{coker}
+\DeclareMathOperator{\im}{im}
+\DeclareMathOperator{\Span}{span}
+\DeclareMathOperator{\Spec}{Spec}
+
+% Categories
+\newcommand{\op}{\mathrm{op}}
+\newcommand{\CSh}{\mathbold{Sh}}
+\newcommand{\CAb}{\mathbold{Ab}}
+\newcommand{\CModR}{\mathbold{Mod_R}}
+\newcommand{\CTop}{\mathbold{Top}}
+\newcommand{\CGrp}{\mathbold{Grp}}
+\newcommand{\CRing}{\mathbold{Ring}}
+\newcommand{\CSet}{\mathbold{Set}}
+
+% Standard Sets
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\ZZ}{\mathbold{Z}}
+\newcommand{\ZP}{\mathbold{Z}_+}
+\newcommand{\ZNN}{\mathbold{Z}_{\geq 0}}
+\newcommand{\NN}{\mathbold{N}}
+\newcommand{\QQ}{\mathbold{Q}}
+\newcommand{\RR}{\mathbold{R}}
+\newcommand{\RP}{\mathbold{R}_+}
+\newcommand{\RPN}{\mathbold{R}_{\geq 0}}
+\newcommand{\CC}{\mathbold{C}}
+\newcommand{\FF}{\mathbold{F}}
+\newcommand{\PP}{\mathbold{P}}
+\newcommand{\KK}{\mathbold{K}}
+\renewcommand{\AA}{\mathbold{A}}
+
+\renewcommand{\Im}{\mathrm{Im\,}}
+\renewcommand{\Re}{\mathrm{Re\,}}
+\newcommand{\tensor}[1][]{\mathchoice%
+  {\stackrel[#1]{}{\otimes}}%
+  {\otimes_{#1}}%
+  {\otimes_{#1}}%
+  {\otimes_{#1}}%
+}
+\newcommand{\wc}{{\mkern 2mu\cdot\mkern 2mu}}
+\newcommand{\idealeq}{\trianglelefteq}
+\newcommand{\ideal}{\triangleleft}
+
+\newcommand{\didi}[2][]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}[2][]{\frac{d #1}{d #2}}
+
+% Mathcal letters
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\cJ}{\mathcal{J}}
+\newcommand{\cK}{\mathcal{K}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cQ}{\mathcal{Q}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cU}{\mathcal{U}}
+\newcommand{\cV}{\mathcal{V}}
+\newcommand{\cW}{\mathcal{W}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cY}{\mathcal{Y}}
+\newcommand{\cZ}{\mathcal{Z}}
+
+\newcommand{\fg}{\mathfrak{g}}
+\newcommand{\fh}{\mathfrak{h}}
+\newcommand{\fp}{\mathfrak{p}}
+\newcommand{\fm}{\mathfrak{m}}
+\newcommand{\fn}{\mathfrak{n}}
+\newcommand{\fX}{\mathfrak{X}}
+\newcommand{\fY}{\mathfrak{Y}}
+\newcommand{\fZ}{\mathfrak{Z}}
+
+\newcommand{\bS}{\mathbf{S}}
+
+% Header
+\title{CO759 Project: All the Same, I Saw it First}
+\author{Raymond Cheng, Sam Eisenstat}
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{Teeth}
+\subsection{Combs}
+Let us quickly recall the setup. Let $G = (V,E)$ be a weighted graph. A
+\textbf{comb} in $G$ consists of a \textbf{handle} $H \subsetneq V$ and $2k+1$,
+$k \geq 1$, \textbf{teeth} $T_1,\ldots,T_{2k+1} \subset V$ such that $\abs{H}
+\geq 3$, the $T_i$ are pairwise disjoint, $T_i \cap H \neq \varnothing$ and
+$T_i \setminus H \neq \varnothing$. We shall also call a tooth $T_i$
+\textbf{simple} if $\abs{T_i} = 2$.
+
+The comb inequalities discovered by Chv\'atal and Gr\"otschel \& Padberg is
+equivalent to the following: if $x$ is the characteristic vector of any tour in
+$G$, then
+\begin{equation}\label{ineq:comb}
+  x(\delta(H)) + \sum^{2k+1}_{i = 1}x(\delta(T_i)) \geq 3(2k+1) + 1.
+\end{equation}
+Let us carefully examine~\eqref{ineq:comb} to see how we might find a violating comb.
+Without loss, we may assume that the graph under consideration, although
+fractional, satisfies the degree LP and all subtour inequalities. Moreover, by
+going through the derivation of~\eqref{ineq:comb}, it also turns out that the if $x$
+violates~\eqref{ineq:comb}, then the right hand side is smaller than the left hand side by
+no more than $1$.
+
+\subsection{Violating Combs}
+To find a violating comb in $G$, we require a comb which makes the left hand
+side of~\eqref{ineq:comb} as large as possible, while keeping the right side small. The
+right hand side is determined completely by the number of teeth in the comb, so
+whenever we construct a comb, we would like to have as many teeth as possible.
+
+Suppose now that we have set $H \subset V$ which is to be the handle of some
+comb.  The preceding discussion suggests that we should grow as many teeth out
+of $H$ as possible. Let $v \in H$ be a vertex incident with edges
+$e_1,\ldots,e_m$ such that the other end $u_i$ of $e_i$ is not in $H$. Consider
+a tooth formed by $v$ along with some subset of the $u_i$, say $i =
+1,\ldots,l$. This tooth will contribute
+\begin{equation*}
+  \sum^m_{i = 1}w(e_i) + \sum^l_{i = 1} (4 - 2w(e_i)) = 4l - \sum^l_{i = 1} w(e_i) + \sum^m_{i = l + 1}w(e_i) \geq 3l
+\end{equation*}
+on the left hand side of~\eqref{ineq:comb}, and a factor of $3$ on the right. The final
+inequality holds with equality if and only if $w(e_i) = 1$ for $i = 1,\ldots,l$
+and $l = m$. By the degree constraints, we also see that the equality conditions
+hold only when $l = 1$.
+
+\subsection{Best Teeth}
+This analysis suggests a way to build a comb given a handle $H$. The best
+possible teeth on $H$ are simple teeth in which the associated edge has weight
+$1$. Suppose that $r$ edges $e_1,\ldots,e_r$ in $\delta(H)$ have edge weight
+$1$.  The above analysis shows that in order to have any hope of finding a
+violated comb inequality, we must add to our comb each simple tooth defined by
+$e_i$. In the fortunate case that $n$ is odd and the $e_i$ are all the edges
+incident with $H$, the resulting comb $C$ is a violating comb:
+\begin{equation*}
+  x(\delta(H)) + \sum^r_{i = 1}x(\delta(e_i)) = r + (4 - 2)r = 3r < 3r + 1.
+\end{equation*}
+
+\subsection{Lower Weight Teeth}
+In general, either $r$ is even there are edges $e'_1,\ldots,e'_s$ that are of
+weight strictly less than $1$. In the first case, nothing can be done and $H$
+is not the handle defining a violating comb. In the second case, a judicious
+choice of which $e_i'$ to include as a tooth in $C$ could still give a violated
+comb. To get a feel for which teeth should be added, consider what~\eqref{ineq:comb} looks
+like in this case so far. With the comb $C$ as above,
+\begin{equation*}
+  x(\delta(H)) + \sum^r_{i = 1}x(\delta(e_i)) = 3r + \sum^s_{i = 1}w(e_i') \geq 3r + 1.
+\end{equation*}
+Note that $\sum^s_{i = 1}w(e_i) \geq 1$ due to the degree constraints---in
+fact, this sum is equal to the number $l$ of vertices $v_1,\ldots,v_l \in H$
+incident with at least one of the edges $e_i'$. In fact, this tells us that we
+must include one tooth for each vertex $v_i$. Consequently, in our
+consideration, the number of vertices in $H$ which are incident to something
+not in $H$ must be odd.
+
+Consider the case in which we include exactly one edge incident with $v_i$ for
+each $i$. By reindexing the edges, assume that the new teeth included are those
+determined by $e_1',\ldots,e_l'$. The inequality~\eqref{ineq:comb} for this new comb $C'$
+is then
+\begin{equation*}
+  3r + \sum^r_{i = 1} w(e_i') + \sum^l_{i = 1}(4 - 2w(e_j')) = 3(r+l) + \sum^r_{i = l+1}w(e_i') + \left(l - \sum^l_{i = 1}w(e_i')\right) \stackrel{?}{\geq} 3(r+l) + 1.
+\end{equation*}
+Then $C'$ is a violating comb if and only if $s + l$ is odd and
+\begin{equation}\label{ineq:2}
+  \sum^r_{i = l+1} w(e_i') + \left(l - \sum^l_{i = 1}w(e_i')\right) < 1.
+\end{equation}
+This inequality tells us that the edges $e_i'$ to be included should be chosen
+with $w(e_i')$ maximal amongst those edges incident to the same vertex $v_j$.
+
+\section{Handles}
+In the above discussion, we assumed we were given a handle $H$ and then we
+considered the teeth that must be taken to potentially construct a violated
+comb.  But we now face the problem of finding the initial handle $H$. Our
+simple heuristic to find $H$ will be guided by the properties of the edges
+leaving $H$.
+
+\subsection{Ignoring High and Low Weight Edges}
+We saw that, ideally, the teeth of a comb are formed by edges of weight almost
+$1$. Concretely, this means that $H$ should be an induced subgraph of $G$ such
+that the weight of the edges joining $H$ with the vertices of $G$ should be
+close to $1$. Such a subgraph can be found by considering the graph $G'$ whose
+vertices are the same as those of $G$ and whose edges are those of $E$ with
+weight smaller than some parameter $\beta$ close to $1$. The connected
+components of $G'$ will then be candidates for handles.
+
+But not all edges leaving a handle must be high weight edges.
+Indeed~\eqref{ineq:2} says that handles may have low weight edges leaving it
+too. Thus it would perhaps be more effective to choose another parameter
+$\alpha$ close to $0$ and set $G'$ to be the subgraph of $G$ with the same
+vertex set and edge set consisting of edges $e \in E$ satisfying $\alpha < w(e)
+< \beta$. Denote by $G(\alpha,\beta) \coloneqq G'$ the subgraph formed in this
+way. Connected components of $G(\alpha,\beta)$ are candidate handles.
+
+\subsection{Oddness Condition}
+Clearly, not all connected components of $G(\alpha,\beta)$ will be the handle
+of a comb. For instance, connected components of size $1$ and $2$ cannot be a
+handle. Also, we have seen that the handle of a violating comb must have have
+an odd number of vertices which are incident to a edge leaving the handle.
+Thus, amongst all connected components of $G(\alpha,\beta)$, those which can be
+considered as potential handles are those components of size at least $3$ and
+which have odd number of vertices on its border.
+\end{document}
