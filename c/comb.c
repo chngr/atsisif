@@ -6,13 +6,14 @@
 int valid_comb (comb *C);
 int violating_comb (comb *C, int verbose);
 int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist, double t_thresh, int verbose);
+    comb ***p_clist, int verbose);
 void destroy_comb(comb *C);
 
 int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist, double t_thresh, int verbose)
+    comb ***p_clist, int verbose)
 {
-  int rval = 0, i, j, k, l, m, nteeth;
+  int rval = 0, i, j, k, l, m, nteeth, best_t;
+  double best_wt;
   node node;
   comb **clist = NULL;
   int *c_sizes = malloc (ncomps * sizeof (int)),
@@ -56,11 +57,15 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
       if (comps[k] == i) {
         clist[j]->handlenodes[l++] = k;
 
+        best_t = -1; best_wt = -1.0;
         node = G->nodelist[k];
         for (m = 0; m < node.deg; m++) {
-          if (comps[node.adj[m].n] != i && G->ewts[node.adj[m].e] > t_thresh)
-            tmp_ts[nteeth++] = node.adj[m].e;
+          if (comps[node.adj[m].n] != i && G->ewts[node.adj[m].e] > best_wt) {
+            best_t = node.adj[m].e;
+            best_wt = G->ewts[best_t];
+          }
         }
+        if (best_t != -1) tmp_ts[nteeth++] = best_t;
         if (l == c_sizes[i]) break;
       }
     }

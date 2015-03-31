@@ -17,7 +17,6 @@ static int seed = 0;
 static int verbose = 0;
 static double lower = 0.05;
 static double upper = 0.95;
-static double t_thresh = 0.5;
 
 int main (int ac, char **av)
 {
@@ -83,7 +82,7 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
   printf ("Running Time for get_comps: %.2f seconds\n", CO759_zeit() - szeit);
 
   szeit = CO759_zeit ();
-  comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh, verbose);
+  comps_to_combs(&G, ncomps, comps, &ncombs, &clist, verbose);
   printf ("Running Time for comps_to_combs: %.2f seconds\n", CO759_zeit() - szeit);
   for (i = 0; i < ncombs; i++) {
     if (valid_comb(clist[i]) && violating_comb(clist[i], verbose)) {
@@ -192,7 +191,7 @@ static int parseargs (int ac, char **av)
     return 1;
   }
 
-  while ((c = getopt (ac, av, "l:u:t:s:v")) != EOF) {
+  while ((c = getopt (ac, av, "l:u:s:v")) != EOF) {
     switch (c) {
       case 's':
         seed = atoi (optarg);
@@ -202,9 +201,6 @@ static int parseargs (int ac, char **av)
         break;
       case 'u':
         upper = atof (optarg);
-        break;
-      case 't':
-        t_thresh = atof (optarg);
         break;
       case 'v':
         verbose = 1;
@@ -233,5 +229,4 @@ static void usage (char *f)
   fprintf (stderr, "   -v    verbose\n");
   fprintf (stderr, "   -l f  set lower threshold for graph components\n");
   fprintf (stderr, "   -u f  set upper threshold for graph components\n");
-  fprintf (stderr, "   -t f  set teeth threshold for comb candidates\n");
 }
