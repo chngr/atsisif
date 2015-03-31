@@ -14,6 +14,7 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts);
 
 static char *fname = (char *) NULL;
 static int seed = 0;
+static int verbose = 0;
 static double lower = 0.05;
 static double upper = 0.95;
 static double t_thresh = 0.5;
@@ -82,34 +83,36 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
   printf ("Running Time for get_comps: %.2f seconds\n", CO759_zeit() - szeit);
 
   szeit = CO759_zeit ();
-  comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh);
+  comps_to_combs(&G, ncomps, comps, &ncombs, &clist, t_thresh, verbose);
   printf ("Running Time for comps_to_combs: %.2f seconds\n", CO759_zeit() - szeit);
   for (i = 0; i < ncombs; i++) {
-    if (valid_comb(clist[i]) && violating_comb(clist[i])) {
+    if (valid_comb(clist[i]) && violating_comb(clist[i], verbose)) {
       printf("Found violating comb with |H| = %d and %d teeth\n", clist[i]->nhandle, clist[i]->nteeth);
 
-      for (j = 0; j < clist[i]->G->ncount; j++)
-        clist[i]->G->nodelist[j].mark = 0;
-      for (j = 0; j < clist[i]->nhandle; j++)
-        clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
+      if (verbose) {
+        for (j = 0; j < clist[i]->G->ncount; j++)
+          clist[i]->G->nodelist[j].mark = 0;
+        for (j = 0; j < clist[i]->nhandle; j++)
+          clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
 
-      printf("[Handle Nodes]\n");
-      for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
-      printf("\n");
+        printf("[Handle Nodes]\n");
+        for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
+        printf("\n");
 
-      printf("[Handle Edges]\n");
-      for (j = 0; j < clist[i]->G->ecount; j++) {
-        a = clist[i]->G->elist[2*j]; b = clist[i]->G->elist[2*j+1];
-        if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
-          printf("%d %d %.2f\n", a, b, clist[i]->G->ewts[j]);
+        printf("[Handle Edges]\n");
+        for (j = 0; j < clist[i]->G->ecount; j++) {
+          a = clist[i]->G->elist[2*j]; b = clist[i]->G->elist[2*j+1];
+          if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
+            printf("%d %d %.2f\n", a, b, clist[i]->G->ewts[j]);
+        }
+
+        printf("[Teeth]\n");
+        for (j = 0; j < clist[i]->nteeth; j++) {
+          int k = clist[i]->teethedges[j];
+          printf("%d %d %.2f\n", clist[i]->G->elist[2*k], clist[i]->G->elist[2*k+1], clist[i]->G->ewts[k]);
+        }
+        printf("\n");
       }
-
-      printf("[Teeth]\n");
-      for (j = 0; j < clist[i]->nteeth; j++) {
-        int k = clist[i]->teethedges[j];
-        printf("%d %d %.2f\n", clist[i]->G->elist[2*k], clist[i]->G->elist[2*k+1], clist[i]->G->ewts[k]);
-      }
-      printf("\n");
     }
   }
 
@@ -128,10 +131,8 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     double **p_ewt)
 {
   FILE *f = NULL;
-  int i, end1, end2, rval = 0, ncount, ecount;
-  double w;
-  int *elist = NULL;
-  double *ewt = NULL;
+  int i, end1, end2, rval = 0, ncount, ecount, *elist = NULL;
+  double w, *ewt = NULL;
 
   if (filename) {
     if ((f = fopen (filename, "r")) == NULL) {
@@ -191,7 +192,7 @@ static int parseargs (int ac, char **av)
     return 1;
   }
 
-  while ((c = getopt (ac, av, "l:u:t:s:")) != EOF) {
+  while ((c = getopt (ac, av, "l:u:t:s:v")) != EOF) {
     switch (c) {
       case 's':
         seed = atoi (optarg);
@@ -204,6 +205,9 @@ static int parseargs (int ac, char **av)
         break;
       case 't':
         t_thresh = atof (optarg);
+        break;
+      case 'v':
+        verbose = 1;
         break;
       case '?':
       default:
@@ -226,6 +230,7 @@ static void usage (char *f)
 {
   fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
   fprintf (stderr, "   -s d  random seed\n");
+  fprintf (stderr, "   -v    verbose\n");
   fprintf (stderr, "   -l f  set lower threshold for graph components\n");
   fprintf (stderr, "   -u f  set upper threshold for graph components\n");
   fprintf (stderr, "   -t f  set teeth threshold for comb candidates\n");

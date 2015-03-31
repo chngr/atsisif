@@ -4,11 +4,13 @@
 #include "graph.h"
 
 int valid_comb (comb *C);
-int violating_comb (comb *C);
-int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs, comb ***p_clist, double t_thresh);
+int violating_comb (comb *C, int verbose);
+int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs,
+    comb ***p_clist, double t_thresh, int verbose);
 void destroy_comb(comb *C);
 
-int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs, comb ***p_clist, double t_thresh)
+int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
+    comb ***p_clist, double t_thresh, int verbose)
 {
   int rval = 0, i, j, k, l, m, nteeth;
   node node;
@@ -72,8 +74,10 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs, comb ***p_clis
     j++;
   }
   *p_clist = clist;
-  for (i = 0; i < *ncombs; i++) {
-    printf("[comb candidate %d] nhandle: %d nteeth: %d\n", i, clist[i]->nhandle, clist[i]->nteeth);
+  if(verbose) {
+    for (i = 0; i < *ncombs; i++) {
+      printf("[comb candidate %d] nhandle: %d nteeth: %d\n", i, clist[i]->nhandle, clist[i]->nteeth);
+    }
   }
 CLEANUP:
   if (c_sizes) free (c_sizes);
@@ -97,7 +101,7 @@ int valid_comb(comb *C)
   return 1;
 }
 
-int violating_comb (comb *C)
+int violating_comb (comb *C, int verbose)
 {
   int i, j;
   node node;
@@ -121,7 +125,7 @@ int violating_comb (comb *C)
   for (i = 0; i < C->nteeth; i++) {
     lhs += 4.0 - 2*C->G->ewts[C->teethedges[i]]; // Using degree constraints
   }
-  if (lhs < rhs) printf("lhs: %.2f rhs: %.2f\n", lhs, rhs);
+  if (verbose && lhs < rhs) printf("lhs: %.2f rhs: %.2f\n", lhs, rhs);
   return lhs < rhs;
 }
 
