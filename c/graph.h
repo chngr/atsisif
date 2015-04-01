@@ -33,5 +33,6 @@ int build_contracted_graph(int, int, edge*, graph*);
 void get_delta(int, int*, int*, int*, graph*);
 void get_comps(graph*, int*, int*, double, double);
 void comp_sizes(int, int, int*, int *);
+int comp_edgewt(const void *, const void *);
 
 #endif  /* __GRAPH_H */

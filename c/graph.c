@@ -46,7 +46,7 @@ void dfs (int n, graph *G, int comp, int *comps, double lower, double upper)
   pn->mark = 1;
 
   for (i = 0; i < pn->deg; i++) {
-    if (lower < G->elist[pn->adj[i].e].wt && G->elist[pn->adj[i].e].wt < upper) {
+    if (lower <= G->elist[pn->adj[i].e].wt && G->elist[pn->adj[i].e].wt <= upper) {
       neighbor = pn->adj[i].n;
       if (G->nodelist[neighbor].mark == 0) {
         dfs (neighbor, G, comp, comps, lower, upper);
@@ -183,15 +183,15 @@ int build_contracted_graph(int ncount, int ecount, edge *elist, graph *G)
     fprintf(stderr, "not enough memory for c_elist\n");
     rval = 1; goto CLEANUP;
   }
-  for(i = 0, j = 0; i < n_c; i++, j++) {
-    n_elist[j] = (edge) { .end1 = nodes[c_edges[i].end1],
-                          .end2 = nodes[c_edges[i].end2],
-                          .wt = c_edges[i].wt };
-  }
-  for(i = 0; i < n_f; i++, j++) {
+  for(i = 0, j = 0; i < n_f; i++, j++) {
     n_elist[j] = (edge) { .end1 = nodes[f_edges[i].end1],
                           .end2 = nodes[f_edges[i].end2],
                           .wt = f_edges[i].wt };
+  }
+  for(i = 0; i < n_c; i++, j++) {
+    n_elist[j] = (edge) { .end1 = nodes[c_edges[i].end1],
+                          .end2 = nodes[c_edges[i].end2],
+                          .wt = c_edges[i].wt };
   }
 
   rval = build_graph(n, n_c + n_f, n_elist, G);
@@ -223,4 +223,13 @@ void get_delta (int comp, int *complist, int *deltacount, int *delta, graph *G)
   *deltacount = k;
 
   for (i = 0; i < G->ncount; i++) G->nodelist[i].mark = 0;
+}
+
+int comp_edgewt(const void * edge1, const void * edge2)
+{
+  edge *a = (edge *) edge1,
+       *b = (edge *) edge2;
+  if (a->wt > b->wt) return 1;
+  if (a->wt < b->wt) return -1;
+  return 0;
 }
