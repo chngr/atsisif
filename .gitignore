@@ -11,3 +11,6 @@ comb_separation
 *.log
 *.pdf
 *.pdfsync
+*.bbl
+*.blg
+*.out

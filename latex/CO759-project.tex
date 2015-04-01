@@ -16,8 +16,8 @@
   \theoremstyle{remark}
   \newtheorem{Remark}[Theorem]{Remark}
 \usepackage[T1]{fontenc}
-\usepackage{mathpazo}
-\linespread{1.05} % following Ian Morrison
+\usepackage{palatino}
+\linespread{1.05}
 \renewcommand{\familydefault}{pplx}
 \renewcommand{\rmdefault}{pplx}
 \usepackage[euler-digits,small]{eulervm}
@@ -26,7 +26,8 @@
 \usepackage{stackrel,braket}
 \usepackage{tikz-cd}
 
-\setlength{\oddsidemargin}{0cm} \setlength{\evensidemargin}{0cm}
+\setlength{\oddsidemargin}{0cm}
+\setlength{\evensidemargin}{0cm}
 \setlength{\marginparwidth}{0in}
 \setlength{\marginparsep}{0in}
 \setlength{\marginparpush}{0in}
@@ -34,7 +35,7 @@
 \setlength{\headheight}{0pt}
 \setlength{\headsep}{20pt}
 \setlength{\footskip}{.3in}
-%\setlength{\textheight}{9.2in}
+\setlength{\textheight}{9.2in}
 \setlength{\textheight}{8.8in}
 \setlength{\textwidth}{6.5in}
 \setlength{\parskip}{4pt}
@@ -169,7 +170,53 @@
 \begin{document}
 \maketitle
 
-\section{Teeth}
+\section{Scaffolding}
+We describe some of the considerations that we went through in the process of
+developing the algorithm that we did. In particular, we will describe a little
+web application built for the purpose of trying to manually find combs in a graph.
+
+\subsection{Staring at the Mona Lisa}
+A lot of the initial ideas came from staring long and hard at the $x$-vector
+visualization of the Mona Lisa. One particular region of the image attracted
+our eyes: the amply exposed region above her bosom. There hid a rather red
+cycle. This reminded us of the prototypical example of a violated comb. Indeed,
+at the time, we thought that we have found a violated comb in the Mona Lisa
+image and this belief motivated a lot of what followed. On later inspection, of
+course, we realized that the supposed violating comb in the Mona Lisa was not
+actually a comb: it had an even number of teeth.
+
+This particular incident suggested that combs should be found by looking for
+subgraphs made up with mainly fractional edges and then growing all possible
+teeth from them. This, of course, is not a new idea: heuristics of this sort
+have been developed by various authors. The method that we will describe, as
+simple as it turned out to be, does not seem to be documented in the very few
+articles that we read. We apologize beforehand if it turns out that we have
+done nothing but reproduce preexisting work.
+
+\subsection{Manually Exploring Combs}
+After studying the $x$-vector visualization of the Mona Lisa, we felt it would
+be useful to be able to manually construct combs in a visualization and test
+whether or not they violated the comb inequality. We set off to build a little
+Javascript application with this purpose. The source code along with some
+(poorly written) documentation on its use is included with this document.
+
+In our manual search for comb inequalities, we first tried to construct a
+handle and then grow teeth out of this handle, as many authors have previously
+done so.  Motivated both by the idea that the handle should consist of nodes
+joined by fractional edges of weight close to $0.5$ and the need to simplify an
+otherwise very complicated graph, we tried to look for handles after hiding
+edges of weight $1$. This quickly led to the idea that, when looking for
+handles, it may be useful to hide edges of high weight in general. Some time
+much later, we also explored hiding edges of low weight too. These ideas,
+all arising from manual experimentation, form the basis of our heuristic.
+
+\section{Comb Separation Heuristic: Theory}
+After the quick discussion of the motivation and intuition underpinning our
+heuristic, we make precise why our choices and algorithm makes sense. We will
+quickly recall what combs are and analyze the comb inequality to see what a
+violating comb must consist of. This analysis will naturally lead to what the
+teeth and handle should look like in a violating comb.
+
 \subsection{Combs}
 Let us quickly recall the setup. Let $G = (V,E)$ be a weighted graph. A
 \textbf{comb} in $G$ consists of a \textbf{handle} $H \subsetneq V$ and $2k+1$,
@@ -254,14 +301,14 @@ Then $C'$ is a violating comb if and only if $s + l$ is odd and
 This inequality tells us that the edges $e_i'$ to be included should be chosen
 with $w(e_i')$ maximal amongst those edges incident to the same vertex $v_j$.
 
-\section{Handles}
+
+\subsection{Ignoring High and Low Weight Edges}
 In the above discussion, we assumed we were given a handle $H$ and then we
 considered the teeth that must be taken to potentially construct a violated
 comb.  But we now face the problem of finding the initial handle $H$. Our
 simple heuristic to find $H$ will be guided by the properties of the edges
 leaving $H$.
 
-\subsection{Ignoring High and Low Weight Edges}
 We saw that, ideally, the teeth of a comb are formed by edges of weight almost
 $1$. Concretely, this means that $H$ should be an induced subgraph of $G$ such
 that the weight of the edges joining $H$ with the vertices of $G$ should be
@@ -286,4 +333,53 @@ an odd number of vertices which are incident to a edge leaving the handle.
 Thus, amongst all connected components of $G(\alpha,\beta)$, those which can be
 considered as potential handles are those components of size at least $3$ and
 which have odd number of vertices on its border.
+
+\section{Computational Aspects}
+Having described the graph theoretic considerations, the heuristic algorithm we
+implemented is then a translation of the above into code. Since the code is attached
+with this document, we will content ourselves with a high level sketch of what is
+going on.
+
+\subsection{Algorithm}
+Let the input graph be $G' = (V',E')$ with weight function $w'$.
+\begin{enumerate}
+  \item Contract weight $1$ paths in $G'$ to obtain a new graph $G = (V,E)$
+    with weight function $w$;
+  \item Choose parameters $0 < \alpha < \beta < 1$;
+  \item Compute connected components of $G(\alpha,\beta)$;
+  \item For each connected component $H$ of $G(\alpha,\beta)$, construct a comb-like
+    object $C$ by taking one simple tooth for every border vertex of $H$;
+  \item Check whether $C$ is a valid comb and, in that case, check whether or not
+    $C$ is violating.
+\end{enumerate}
+
+\subsection{Contracting Weight $1$ Paths}
+Let us elaborate on the first step a little more, as we did not discuss this
+when considering the graph theory above. In particular, we explain why this
+computation simplication step does not affect the validity of a violating comb
+found with this algorithm.  By ``contracting weight $1$ paths'', we mean that a
+path in $G'$ consisting of weight $1$ edges is to be replaced by a single
+weight $1$ edge.
+
+First, this contraction step does not affect the contributions made by teeth of
+combs found above. In our heuristic, we look only for simple teeth, i.e. those
+teeth $T$ determined by a single edge $e$. By the degree constraints, the
+contributions of $x(\delta(T))$ are necessarily $4 - w(e)$; in particular, this
+depends only on the weight of $e$. Since we are simply replacing paths of
+weight $1$ edges with a single weight $1$ edge, no change occurs to
+$x(\delta(T))$ for any simple tooth $T$.
+
+Second, contraction does not eliminate potential handles. A comb must have at
+least $3$ teeth, so the handle of comb cannot be strictly contained in a weight
+$1$ path: otherwise, the degree constraints would imply the handle could only
+have $2$ teeth.
+
+\subsection{Choice of Parameters}
+There are two parameters, $\alpha$ and $\beta$, which need to be chosen in the
+algorithm. Indeed, different choices of $\alpha$ and $\beta$ will make a
+significant difference in terms of whether or not this method finds any
+violating combs.
+
+% Decrementing
+% Just lowering to each occurrence -- sort the weights and jump
 \end{document}
