@@ -60,9 +60,9 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
         best_t = -1; best_wt = -1.0;
         node = G->nodelist[k];
         for (m = 0; m < node.deg; m++) {
-          if (comps[node.adj[m].n] != i && G->ewts[node.adj[m].e] > best_wt) {
+          if (comps[node.adj[m].n] != i && G->elist[node.adj[m].e].wt > best_wt) {
             best_t = node.adj[m].e;
-            best_wt = G->ewts[best_t];
+            best_wt = G->elist[best_t].wt;
           }
         }
         if (best_t != -1) tmp_ts[nteeth++] = best_t;
@@ -99,7 +99,7 @@ int valid_comb(comb *C)
   /* Check disjointness of teeth */
   for (i = 0; i < C->G->ncount; i++) C->G->nodelist[i].mark = 0;
   for (i = 0, j = 1; i < C->nteeth; i++) {
-    a = C->G->elist[2*C->teethedges[i]]; b = C->G->elist[2*C->teethedges[i]+1];
+    a = C->G->elist[C->teethedges[i]].end1; b = C->G->elist[C->teethedges[i]].end2;
     if (C->G->nodelist[a].mark != 0 || C->G->nodelist[b].mark != 0) return 0;
     C->G->nodelist[a].mark = j; C->G->nodelist[b].mark = j;
   }
@@ -122,13 +122,13 @@ int violating_comb (comb *C, int verbose)
     node = C->G->nodelist[C->handlenodes[i]];
     for (j = 0; j < node.deg; j++) {
       if (!C->G->nodelist[node.adj[j].n].mark)
-        lhs += C->G->ewts[node.adj[j].e];
+        lhs += C->G->elist[node.adj[j].e].wt;
     }
   }
 
   /* Contributions from teeth */
   for (i = 0; i < C->nteeth; i++) {
-    lhs += 4.0 - 2*C->G->ewts[C->teethedges[i]]; // Using degree constraints
+    lhs += 4.0 - 2*C->G->elist[C->teethedges[i]].wt; // Using degree constraints
   }
   if (verbose && lhs < rhs) printf("lhs: %.2f rhs: %.2f\n", lhs, rhs);
   return lhs < rhs;

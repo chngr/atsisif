@@ -6,11 +6,11 @@
 #include "util.h"
 #include "comb.h"
 
-static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist, double **p_ewt);
+static int getprob (char *fname, int *p_ncount, int *p_ecount, edge **p_elist);
 static int parseargs (int ac, char **av);
 static void usage (char *f);
 
-static int find_combs(int ncount, int ecount, int *elist, double *ewts);
+static int find_combs(int ncount, int ecount, edge *elist);
 
 static char *fname = (char *) NULL;
 static int seed = 0;
@@ -21,8 +21,7 @@ static double upper = 0.95;
 int main (int ac, char **av)
 {
   int rval  = 0, ncount = 0, ecount = 0;
-  int *elist = NULL;
-  double *ewts = NULL;
+  edge *elist = NULL;
   double szeit;
 
   seed = (int) CO759_real_zeit ();
@@ -40,30 +39,29 @@ int main (int ac, char **av)
 
   if (fname) printf ("Problem name: %s\n", fname);
 
-  rval = getprob (fname, &ncount, &ecount, &elist, &ewts);
+  rval = getprob (fname, &ncount, &ecount, &elist);
   if (rval) { fprintf (stderr, "getprob failed\n"); goto CLEANUP; }
 
   szeit = CO759_zeit ();
-  rval = find_combs(ncount, ecount, elist, ewts);
+  rval = find_combs(ncount, ecount, elist);
   if (rval) { fprintf (stderr, "find_combs failed\n"); goto CLEANUP; }
   printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
   fflush (stdout);
 
 CLEANUP:
   if (elist) free (elist);
-  if (ewts) free (ewts);
   return rval;
 }
 
-static int find_combs(int ncount, int ecount, int *elist, double *ewts)
+static int find_combs(int ncount, int ecount, edge *elist)
 {
   int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0, a, b;
-  double *y = NULL, szeit;
+  double szeit;
   graph G;
   comb **clist = NULL;
   init_graph(&G);
   szeit = CO759_zeit ();
-  rval = build_contracted_graph(ncount, ecount, elist, ewts, y, &G);
+  rval = build_contracted_graph(ncount, ecount, elist, &G);
   printf ("Running Time for build_contracted_graph: %.2f seconds\n", CO759_zeit() - szeit);
   printf("Graph nodes: %d Graph edges: %d\n", G.ncount, G.ecount);
 
@@ -100,15 +98,15 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
 
         printf("[Handle Edges]\n");
         for (j = 0; j < clist[i]->G->ecount; j++) {
-          a = clist[i]->G->elist[2*j]; b = clist[i]->G->elist[2*j+1];
+          a = clist[i]->G->elist[j].end1; b = clist[i]->G->elist[j].end2;
           if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
-            printf("%d %d %.2f\n", a, b, clist[i]->G->ewts[j]);
+            printf("%d %d %.2f\n", a, b, clist[i]->G->elist[j].wt);
         }
 
         printf("[Teeth]\n");
         for (j = 0; j < clist[i]->nteeth; j++) {
           int k = clist[i]->teethedges[j];
-          printf("%d %d %.2f\n", clist[i]->G->elist[2*k], clist[i]->G->elist[2*k+1], clist[i]->G->ewts[k]);
+          printf("%d %d %.2f\n", clist[i]->G->elist[k].end1, clist[i]->G->elist[k].end2, clist[i]->G->elist[k].wt);
         }
         printf("\n");
       }
@@ -117,7 +115,6 @@ static int find_combs(int ncount, int ecount, int *elist, double *ewts)
 
 CLEANUP:
   free_graph(&G);
-  if(y) free (y);
   if(comps) free (comps);
   if(clist) {
     for (i = 0; i < ncombs; i++) { destroy_comb(clist[i]); }
@@ -126,12 +123,12 @@ CLEANUP:
   return rval;
 }
 
-static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
-    double **p_ewt)
+static int getprob (char *filename, int *p_ncount, int *p_ecount, edge **p_elist)
 {
   FILE *f = NULL;
-  int i, end1, end2, rval = 0, ncount, ecount, *elist = NULL;
-  double w, *ewt = NULL;
+  int i, end1, end2, rval = 0, ncount, ecount;
+  edge *elist = NULL;
+  double w;
 
   if (filename) {
     if ((f = fopen (filename, "r")) == NULL) {
@@ -147,26 +144,18 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     printf ("Nodes: %d  Edges: %d\n", ncount, ecount);
     fflush (stdout);
 
-    elist = (int *) malloc (2 * ecount * sizeof (int));
+    elist = malloc (ecount * sizeof (edge));
     if (!elist) {
       fprintf (stderr, "out of memory for elist\n");
       rval = 1;  goto CLEANUP;
     }
 
-    ewt = malloc (ecount * sizeof (double));
-    if (!ewt) {
-      fprintf (stderr, "out of memory for elen\n");
-      rval = 1;  goto CLEANUP;
-    }
-
     for (i = 0; i < ecount; i++) {
-      if (fscanf(f,"%d %d %lf",&end1, &end2, &w) != 3) {
-      fprintf (stderr, "%s has invalid input format\n", filename);
-      rval = 1;  goto CLEANUP;
-    }
-    elist[2*i] = end1;
-    elist[2*i+1] = end2;
-    ewt[i] = w;
+        if (fscanf(f,"%d %d %lf",&end1, &end2, &w) != 3) {
+        fprintf (stderr, "%s has invalid input format\n", filename);
+        rval = 1;  goto CLEANUP;
+      }
+      elist[i] = (edge) { .end1 = end1, .end2 = end2, .wt = w};
     }
   } else {
     fprintf(stderr, "A filename is required\n");
@@ -175,7 +164,6 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
   *p_ncount = ncount;
   *p_ecount = ecount;
   *p_elist = elist;
-  *p_ewt = ewt;
 
 CLEANUP:
   if (f) fclose (f);
