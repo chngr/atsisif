@@ -12,7 +12,7 @@ typedef struct comb {
 
 int comps_to_combs(graph*, int, int*, int*, comb***, int);
 int valid_comb(comb *);
-int violating_comb(comb *, int);
+double comb_weight(comb *);
 void destroy_comb(comb *);
 
 #endif

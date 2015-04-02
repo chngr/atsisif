@@ -4,7 +4,7 @@
 #include "graph.h"
 
 int valid_comb (comb *C);
-int violating_comb (comb *C, int verbose);
+double comb_weight(comb *C);
 int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs,
     comb ***p_clist, int verbose);
 void destroy_comb(comb *C);
@@ -13,7 +13,7 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
     comb ***p_clist, int verbose)
 {
   int rval = 0, i, j, k, l, m, nteeth, best_t;
-  double best_wt;
+  double best_wt, node_wt;
   node node;
   comb **clist = NULL;
   int *c_sizes = malloc (ncomps * sizeof (int)),
@@ -57,15 +57,18 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
       if (comps[k] == i) {
         clist[j]->handlenodes[l++] = k;
 
-        best_t = -1; best_wt = -1.0;
+        best_t = -1; best_wt = -1.0; node_wt = 0.0;
         node = G->nodelist[k];
         for (m = 0; m < node.deg; m++) {
-          if (comps[node.adj[m].n] != i && G->elist[node.adj[m].e].wt > best_wt) {
-            best_t = node.adj[m].e;
-            best_wt = G->elist[best_t].wt;
+          if (comps[node.adj[m].n] != i) {
+            node_wt += G->elist[node.adj[m].e].wt;
+            if(G->elist[node.adj[m].e].wt > best_wt) {
+              best_t = node.adj[m].e;
+              best_wt = G->elist[best_t].wt;
+            }
           }
         }
-        if (best_t != -1) tmp_ts[nteeth++] = best_t;
+        if (best_t != -1 && 1.0 - best_wt < node_wt) tmp_ts[nteeth++] = best_t;
         if (l == c_sizes[i]) break;
       }
     }
@@ -106,13 +109,11 @@ int valid_comb(comb *C)
   return 1;
 }
 
-int violating_comb (comb *C, int verbose)
+double comb_weight (comb *C)
 {
   int i, j;
   node node;
-  double rhs = 3.0 * ((double) C->nteeth) + 1.0,
-         lhs = 0.0;
-
+  double wt = 0.0;
   /* Mark the nodes appearing in the handle */
   for (i = 0; i < C->G->ncount; i++) C->G->nodelist[i].mark = 0;
   for (i = 0; i < C->nhandle; i++) C->G->nodelist[C->handlenodes[i]].mark = 1;
@@ -122,16 +123,14 @@ int violating_comb (comb *C, int verbose)
     node = C->G->nodelist[C->handlenodes[i]];
     for (j = 0; j < node.deg; j++) {
       if (!C->G->nodelist[node.adj[j].n].mark)
-        lhs += C->G->elist[node.adj[j].e].wt;
+        wt += C->G->elist[node.adj[j].e].wt;
     }
   }
-
   /* Contributions from teeth */
-  for (i = 0; i < C->nteeth; i++) {
-    lhs += 4.0 - 2*C->G->elist[C->teethedges[i]].wt; // Using degree constraints
-  }
-  if (verbose && lhs < rhs) printf("lhs: %.2f rhs: %.2f\n", lhs, rhs);
-  return lhs < rhs;
+  for (i = 0; i < C->nteeth; i++)
+    wt += 4.0 - 2*C->G->elist[C->teethedges[i]].wt; // Using degree constraints
+
+  return wt;
 }
 
 void destroy_comb (comb *C)
