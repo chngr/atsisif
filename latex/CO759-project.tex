@@ -24,7 +24,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[tracking]{microtype}
 \usepackage{stackrel,braket}
-\usepackage{tikz-cd}
+\usepackage{hyperref}
 
 \setlength{\oddsidemargin}{0cm}
 \setlength{\evensidemargin}{0cm}
@@ -169,8 +169,30 @@
 \date{\today}
 \begin{document}
 \maketitle
+Cutting plane methods have been very successful in solving large-scale
+travelling salesman problems (TSP). The basic structured cuts for the TSP are
+subtour inequalities. Subtour cuts are essentially completely understood: there
+are fast exact separation algorithms.
 
-\section{Scaffolding}
+Another important class of structured cuts are comb inequalities. These cuts
+appear to be less understood; in particular, there is no known exact separation
+algorithm for combs in general. The purpose of our work is to develop a
+heuristic to find comb inequalities. Many authors have developed comb
+separation heuristics, but perhaps due to our ignorance, we have not been able
+to find any work which is all too similar to our own.
+
+This document explains the work that we have been able to do.
+Section~\ref{sec:scaffolding} begins by discussing some of the things we did
+when first trying to develop the heuristic. In section~\ref{sec:theory}, we
+provide some justification as to why our heuristic might be reasonable before
+actually describing the algorithm and implementation in section~\ref{sec:algo}.
+In section~\ref{sec:computations}, we discuss some computational results.  We
+close off in sections~\ref{sec:opt} and~\ref{sec:questions} by discussing some
+directions for future work in terms of optimizations to the implementation,
+improvements to the algorithm, and theoretical questions regarding our
+heuristic.
+
+\section{Scaffolding}\label{sec:scaffolding}
 We describe some of the considerations that we went through in the process of
 developing the algorithm that we did. In particular, we will describe a little
 web application built for the purpose of trying to manually find combs in a graph.
@@ -210,7 +232,7 @@ handles, it may be useful to hide edges of high weight in general. Some time
 much later, we also explored hiding edges of low weight too. These ideas,
 all arising from manual experimentation, form the basis of our heuristic.
 
-\section{Comb Separation Heuristic: Theory}
+\section{Comb Separation Heuristic: Theory}\label{sec:theory}
 After the quick discussion of the motivation and intuition underpinning our
 heuristic, we make precise why our choices and algorithm makes sense. We will
 quickly recall what combs are and analyze the comb inequality to see what a
@@ -334,7 +356,7 @@ Thus, amongst all connected components of $G(\alpha,\beta)$, those which can be
 considered as potential handles are those components of size at least $3$ and
 which have odd number of vertices on its border.
 
-\section{Computational Aspects}
+\section{Computational Aspects}\label{sec:algo}
 Having described the graph theoretic considerations, the heuristic algorithm we
 implemented is then a translation of the above into code. Since the code is attached
 with this document, we will content ourselves with a high level sketch of what is
@@ -347,19 +369,19 @@ Let the input graph be $G' = (V',E')$ with weight function $w'$.
     with weight function $w$;
   \item Choose parameters $0 < \alpha < \beta < 1$;
   \item Compute connected components of $G(\alpha,\beta)$;
-  \item For each connected component $H$ of $G(\alpha,\beta)$, construct a comb-like
-    object $C$ by taking one simple tooth for every border vertex of $H$;
+  \item Construct a potential comb $C$ with simple teeth for each connected
+    component of $G(\alpha,\beta)$;
   \item Check whether $C$ is a valid comb and, in that case, check whether or not
     $C$ is violating.
 \end{enumerate}
+In what follows, we elaborate on each of the steps and make a few comments about
+their implementation.
 
 \subsection{Contracting Weight $1$ Paths}
-Let us elaborate on the first step a little more, as we did not discuss this
-when considering the graph theory above. In particular, we explain why this
-computation simplication step does not affect the validity of a violating comb
-found with this algorithm.  By ``contracting weight $1$ paths'', we mean that a
-path in $G'$ consisting of weight $1$ edges is to be replaced by a single
-weight $1$ edge.
+By ``contracting weight $1$ paths'', we mean that a path in $G'$ consisting of
+weight $1$ edges is to be replaced by a single weight $1$ edge. As this step was
+not previously discussed, let us also justify why this reduction is valid, or at
+least reasonable.
 
 First, this contraction step does not affect the contributions made by teeth of
 combs found above. In our heuristic, we look only for simple teeth, i.e. those
@@ -374,12 +396,153 @@ least $3$ teeth, so the handle of comb cannot be strictly contained in a weight
 $1$ path: otherwise, the degree constraints would imply the handle could only
 have $2$ teeth.
 
+In our implementation, the contraction process is done in a preprocessing step
+with the list of edges. A graph data structure is then constructed with this
+preprocessed input, where all the indices are shifted down. An array containing
+the original indices is maintained so that violating combs found in the
+contracted graph can be viewed as combs in the original graph.
+
 \subsection{Choice of Parameters}
 There are two parameters, $\alpha$ and $\beta$, which need to be chosen in the
 algorithm. Indeed, different choices of $\alpha$ and $\beta$ will make a
 significant difference in terms of whether or not this method finds any
-violating combs.
+violating combs. Two simple ways of choosing these parameters might be: (1)
+fix $\alpha$ and $\beta$ at the beginning of the algorithm; or (2) loop through
+pairs of $\alpha$, $\beta$ which are changing with respect to some step size.
 
-% Decrementing
-% Just lowering to each occurrence -- sort the weights and jump
+These simple methods of choosing $\alpha$ and $\beta$ can be improved with the
+following observation: if we increase the parameter $\alpha$, say, in
+$G(\alpha,\beta)$, then the only times when the graph changes is when $\alpha$
+passes the weight of some edge in $G$. Thus the only relevant pairs
+$\alpha,\beta$ are pairs of edge weights of $G$.
+
+Concretely, the above method means that we start with $\alpha < \beta$ the pair
+of smallest and largest edge weights in $G$, respectively. Steps (3)--(5) of
+the algorithm are then run with this choice of $\alpha < \beta$. The parameter
+$\beta$ is then replaced by largest edge weight strictly smaller than the old
+$\beta$ and the process is repeated. When $\beta$ is decreased so that $\alpha
+\geq \beta$, $\beta$ is reset to the largest edge weight and the new $\alpha$
+is taken to be the smallest edge weight strictly larger than the old $\alpha$.
+This entire process is repeated until $\alpha$ has reached the second largest
+edge weight. In full, this procedure tests $O(|E|^2)$ choices of parameters.
+
+In our implementation, however, we do not step through every single pair of
+edge weights. We introduce another parameter $\epsilon > 0$ and demand that the
+difference between the old parameter and the new is at least $\epsilon$. That
+is, say we start with a pair $\alpha < \beta$ and time has come to decrease
+$\beta$. Instead of choosing the largest edge weight smaller than $\beta$, we
+take that which is smaller than $\beta - \epsilon$. Likewise, when it is time
+to increment $\alpha$, we take the smallest edge weight larger than $\alpha +
+\epsilon$. In this scheme, no more than $\epsilon^{-2}$ pairs of parameters
+will be tested.
+
+Of course, we now come to the problem of setting the parameter $\epsilon$. For
+$\epsilon$ sufficiently small, say on the order of $10^{-6}$, each pair of
+$\alpha < \beta$ will be tested. For larger $\epsilon$, the computation time is
+significantly reduced at the cost of skipping some pairs of parameters $\alpha
+< \beta$.
+
+\subsection{Connected Components \& Potential Combs}
+With the choice of $\alpha < \beta$ above, a depth-first search procedure is
+used to compute the connected components of $G(\alpha,\beta)$. Each of these
+connected components are candidates for handles of combs in $G$. For each
+candidate handle $H$ and for each border vertex $v \in H$, we decide whether or
+not to construct a simple tooth from $v$ as follows. Let
+\begin{align*}
+  s \coloneqq \max\set{w(e) | e \in \delta(H), \;\text{$e$ incident to $v$}}, \qquad t \coloneqq \sum \set{w(e) | e = uv \in E, u \notin H}.
+\end{align*}
+If $1 - s < t$, then we add the simple tooth given by the edge $e$ achieving
+the maximum $s$; otherwise, no new tooth is constructed. With this choice, the
+difference in contribution to the two sides of~\eqref{ineq:comb} is minimized.
+This is because adding the tooth given by $e$ will contribute a difference of
+$1 - s$ between the two sides, whereas adding no tooth will give a difference
+of $t$. Once these candidate combs are constructed, they are checked to see if
+they are valid and whether or not they violate~\eqref{ineq:comb}. In the case that
+both statements are true, they are stored for later use.
+
+\section{Computational Results}\label{sec:computations}
+We have
+
+\section{Improvements and Optimizations}\label{sec:opt}
+We have described a fairly simple procedure to look for violated comb
+inequalities. There are many ways to improve the effectiveness and efficiency
+of the algorithm and implementation developed. Here, we will describe some
+ideas that have occurred to us, but due to a lack of time, energy, expertise
+and, primarily, due to sloth, we have not earnestly attempted.
+
+\subsection{Parallel Loop Through Parameters}
+For each pair of edge weights $(\alpha, \beta)$, we compute $G(\alpha,\beta)$,
+compute its connected components and look for violated combs with the
+components of $G(\alpha,\beta)$ forming the handles. In particular, the
+computations for different choices of $(\alpha, \beta)$ are independent of one
+another. It should then not be too difficult to perform the loop through
+different pairs of $(\alpha,\beta)$ in parallel.
+
+\subsection{Reusing Old $G(\alpha,\beta)$}
+Currently, each time a new choice of parameters $(\alpha,\beta)$ is chosen, the
+graph $G(\alpha,\beta)$ is recomputed from scratch. This seems wasteful: often times,
+one of the parameters changes only by a little and thus the new $G(\alpha,\beta)$
+would differ from the old only by the addition of a few edges. One would probably
+obtain a significant speedup by finding a way to use the old $G(\alpha,\beta)$
+to compute the new $G(\alpha,\beta)$.
+
+\subsection{Adding Ignored Teeth for Oddness}
+When constructing potential combs in the algorithm, we add teeth based on the
+difference between the contribution to the two sides of~\eqref{ineq:comb}. This
+does not take to heart the requirement that combs must have an odd number of
+teeth.  Thus the algorithm proposed might miss a violating comb which would
+otherwise be found if we either take an extra tooth or leave out some tooth.
+One possible way to get around this may be to perform one additional check if a
+candidate comb $C$ finally comes to have an even number of teeth. In this pass,
+if the number of teeth of $C$ is at least $4$, then one might drop the tooth
+whose determining edge has the smallest weight. If no tooth is to be dropped,
+then amongst those boundary vertices of $H$ not incident to any tooth, we add
+the simple tooth determined by an edge of maximal weight.
+
+\section{Questions}\label{sec:questions}
+Whilst thinking about the algorithm proposed here, a few questions about comb
+inequalities came to mind. We have not looked very hard in the literature nor
+have we expended any significant effort to answer these questions ourselves.
+Nonetheless, for sake of record and as a potential direction for our own future
+work, we record our thoughts and questions here.
+
+\subsection{Analyzing the Parameters More Carefully}
+The parameters $(\alpha,\beta)$ are taken to be (almost) every pair of edge
+weights appearing in $G$. Is this really necessary, however?  Maybe it is
+sufficient to take $\alpha = 1 - \beta$, for instance. It would be fairly
+interesting to see whether or not the $(\alpha,\beta)$ that lead to violating
+combs must satisfy some condition.
+
+\subsection{Sufficiency of Simple Teeth}
+Combs considered in our algorithm have only simple teeth, i.e. teeth determined
+by a single edge. It is natural to wonder whether or not all comb inequalities
+can be satisfied just by ensuring all inequalities involving combs with simple
+teeth are satisfied. Of course, it is possible to find violating combs with
+teeth that are not necessarily simple. For instance, let $v$ be a boundary
+vertex of $H$, $vu$ a weight $1$ edge with $u \notin H$ and $uw$ another weight
+$1$ edge. Then the tooth formed by the edge $uv$ contributes the same amount
+amounts to~\eqref{ineq:comb} as the tooth formed by the pair of edges $vu$ and
+$uw$.
+
+This example departs from a simple tooth in a rather trivial way: we are taking
+a segment of a weight $1$ path to be a tooth rather than a single weight $1$
+edge. Such problems are avoided in our algorithm by contracting weight $1$
+paths. Although we do not have an example in mind, perhaps there are violating
+combs with teeth which are not necessarily simple.
+
+Nonetheless, through considering small examples, we believe that a statement of
+the following form is true.
+
+\noindent\textbf{Speculation.} Let $G$ be a weighted graph satisfying
+the degree constraints. If $(H,T_1\ldots,T_{2k+1})$ is a violating comb in $G$,
+the there exists simple teeth $T_i' \subseteq T_i$, $i = 1,\ldots,2k+1$, such
+that $(H,T_1',\ldots,T_{2k+1}')$ is also a violating comb of $G$.
+
+We have not tried very hard to prove nor disprove this statement.
+
+\subsection{Finding All Violating Combs With Simple Teeth}
+Another question that arises from this algorithm is whether or not it finds all
+violated combs with simple teeth. We suspect that the answer to this question
+is `no' for the current implementation, but may turn to a `yes' when a few of
+the improvements suggested in the previous section are taken to account.
 \end{document}
