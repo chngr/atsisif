@@ -7,7 +7,7 @@ void get_delta (int comp, int *complist, int *deltacount, int *delta, graph *G);
 void init_graph (graph *G);
 void free_graph (graph *G);
 int build_graph (int ncount, int ecount, edge *elist, graph *G);
-int build_contrated_graph(int ncount, int ecount, edge *elist, graph *G);
+int build_contracted_graph(int ncount, int ecount, edge *elist, int **original_indices, graph *G);
 void get_comps(graph *G, int *comps, int *ncomps, double lower, double upper);
 void comp_sizes(int ncount, int ncomps, int *comps, int *comp_sizes);
 void dfs (int n, graph *G, int comp, int *comps, double lower, double upper);
@@ -126,7 +126,7 @@ CLEANUP:
   return rval;
 }
 
-int build_contracted_graph(int ncount, int ecount, edge *elist, graph *G)
+int build_contracted_graph(int ncount, int ecount, edge *elist, int **original_indices, graph *G)
 {
   int rval = 0, i = 0, j = 0, a, b, n_c = 0, n_f = 0, n = 0, in_path = 0;
   double *c_ewts = NULL, *f_ewts = NULL, w;
@@ -173,8 +173,16 @@ int build_contracted_graph(int ncount, int ecount, edge *elist, graph *G)
     if(!nodes[b]) { nodes[b] = 1; n++; }
   }
 
+  *original_indices = malloc (n * sizeof(int));
+  if(!(*original_indices)) {
+    fprintf (stderr, "out of memory for original_indices\n");
+    rval = 1; goto CLEANUP;
+  }
   for(i = 0, j = 0; i < ncount; i++) {
-    if(nodes[i]) { nodes[i] = j++; }
+    if(nodes[i]) {
+      (*original_indices)[j] = i;
+      nodes[i] = j++;
+    }
   }
 
   /* Construct new edges list and edge weight vector */

@@ -29,7 +29,7 @@ typedef struct graph {
 void init_graph(graph*);
 void free_graph(graph*);
 int build_graph(int, int, edge*, graph*);
-int build_contracted_graph(int, int, edge*, graph*);
+int build_contracted_graph(int, int, edge*, int**, graph*);
 void get_delta(int, int*, int*, int*, graph*);
 void get_comps(graph*, int*, int*, double, double);
 void comp_sizes(int, int, int*, int *);

@@ -3,11 +3,12 @@
 #include "comb.h"
 #include "graph.h"
 
-int valid_comb (comb *C);
 double comb_weight(comb *C);
-int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist);
+int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs, comb ***p_clist);
+int comb_int(const void *a, const void *b);
+int valid_comb (comb *C);
 void destroy_comb(comb *C);
+void print_comb(comb *C, int *original_indices);
 
 int comp_int(const void *a, const void *b) {
   if(*(int *) a < *(int *)b) return -1;
@@ -154,4 +155,31 @@ int equal_combs(comb *C, comb *D)
     if(C->teethedges[i] != D->teethedges[i]) return 0;
   }
   return 1;
+}
+
+void print_comb(comb *C, int *original_indices)
+{
+  int i, a, b;
+  for (i = 0; i < C->G->ncount; i++)
+    C->G->nodelist[i].mark = 0;
+  for (i = 0; i < C->nhandle; i++)
+    C->G->nodelist[C->handlenodes[i]].mark = 1;
+
+  printf("[Handle Nodes]\n");
+  for (i = 0; i < C->nhandle; i++) printf("%d ", original_indices[C->handlenodes[i]]);
+  printf("\n");
+
+  printf("[Handle Edges]\n");
+  for (i = 0; i < C->G->ecount; i++) {
+    a = C->G->elist[i].end1; b = C->G->elist[i].end2;
+    if (C->G->nodelist[a].mark + C->G->nodelist[b].mark == 2)
+      printf("%d %d %.2f\n", a, b, C->G->elist[i].wt);
+  }
+
+  printf("[Teeth]\n");
+  for (i = 0; i < C->nteeth; i++) {
+    int k = C->teethedges[i];
+    printf("%d %d %.6f\n", original_indices[C->G->elist[k].end1], original_indices[C->G->elist[k].end2], C->G->elist[k].wt);
+  }
+  printf("\n");
 }

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <math.h>
 #include "graph.h"
@@ -16,6 +17,8 @@ static char *fname = (char *) NULL;
 static int seed = 0;
 static int verbose = 0;
 static double EPSILON = 0.001;
+static int output = 0;
+static char output_filename[256];
 
 int main (int ac, char **av)
 {
@@ -26,6 +29,7 @@ int main (int ac, char **av)
 
   rval = parseargs (ac, av);
   printf("Epsilon: %.6f\n", EPSILON);
+  printf("Output: %d Filename: %s\n", output, output_filename);
   if (rval) goto CLEANUP;
 
   if (!fname) {
@@ -52,15 +56,14 @@ CLEANUP:
 
 static int find_combs(int ncount, int ecount, edge *elist)
 {
-  int rval = 0, i, j, a, b, l_idx, u_idx, violating;
+  int rval = 0, i, j, l_idx, u_idx, violating;
   int ncomps, ncombs = 0, nvcombs = 0, vclist_size = 2;
-  int *comps = NULL;
+  int *comps = NULL, *original_indices = NULL;
   double l = -EPSILON, u = 1.0 + EPSILON, lhs, rhs;
   graph G;
   comb **clist = NULL, **vclist = NULL;
   init_graph(&G);
-  rval = build_contracted_graph(ncount, ecount, elist, &G);
-
+  rval = build_contracted_graph(ncount, ecount, elist, &original_indices, &G);
   if (rval) {
     fprintf(stderr, "build_contracted_graph failed\n");
     rval = 1; goto CLEANUP;
@@ -90,8 +93,7 @@ static int find_combs(int ncount, int ecount, edge *elist)
             for (j = 0; j < nvcombs; j++) {
               if(equal_combs(clist[i], vclist[j])) break;
             }
-            if (j == nvcombs) {
-              violating = 1;
+            if ((violating = j == nvcombs)) {
               if(nvcombs + 1 > vclist_size) {
                 vclist_size *= 2;
                 vclist = realloc (vclist, vclist_size * sizeof (comb*));
@@ -102,31 +104,7 @@ static int find_combs(int ncount, int ecount, edge *elist)
               }
               vclist[nvcombs++] = clist[i];
               printf("Found violating comb #%d with |H| = %d and %d teeth with violation %.6f\n", nvcombs, clist[i]->nhandle, clist[i]->nteeth, rhs - lhs);
-
-              if (verbose) {
-                for (j = 0; j < clist[i]->G->ncount; j++)
-                  clist[i]->G->nodelist[j].mark = 0;
-                for (j = 0; j < clist[i]->nhandle; j++)
-                  clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
-
-                printf("[Handle Nodes]\n");
-                for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
-                printf("\n");
-
-                printf("[Handle Edges]\n");
-                for (j = 0; j < clist[i]->G->ecount; j++) {
-                  a = clist[i]->G->elist[j].end1; b = clist[i]->G->elist[j].end2;
-                  if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
-                    printf("%d %d %.2f\n", a, b, clist[i]->G->elist[j].wt);
-                }
-
-                printf("[Teeth]\n");
-                for (j = 0; j < clist[i]->nteeth; j++) {
-                  int k = clist[i]->teethedges[j];
-                  printf("%d %d %.6f\n", clist[i]->G->elist[k].end1, clist[i]->G->elist[k].end2, clist[i]->G->elist[k].wt);
-                }
-                printf("\n");
-              }
+              if (verbose) print_comb(clist[i], original_indices);
             }
           }
         }
@@ -138,10 +116,29 @@ static int find_combs(int ncount, int ecount, edge *elist)
     }
   }
   printf("Found %d violating combs\n", nvcombs);
+  if(output) {
+    FILE *output_file = fopen(output_filename, "a+");
+    for(i = 0; i < nvcombs; i++) {
+      fprintf(output_file, "%d\n", vclist[i]->nteeth + 1);
+
+      fprintf(output_file, "%d ", vclist[i]->nhandle);
+      for(j = 0; j < vclist[i]->nhandle; j++) {
+        fprintf(output_file, " %d", original_indices[vclist[i]->handlenodes[j]]);
+      }
+      fprintf(output_file, "\n");
+      for (j = 0; j < vclist[i]->nteeth; j++) {
+        fprintf(output_file, "2  %d %d\n",
+            original_indices[vclist[i]->G->elist[vclist[i]->teethedges[j]].end1],
+            original_indices[vclist[i]->G->elist[vclist[i]->teethedges[j]].end2]);
+      }
+      fprintf(output_file, "%d\n", 3 * vclist[i]->nteeth + 1);
+    }
+  }
 
 CLEANUP:
   free_graph(&G);
   if(comps) free (comps);
+  if(original_indices) free (original_indices);
   if(vclist) {
     for (i = 0; i < nvcombs; i++) {
       if(vclist[i]) {
@@ -209,7 +206,7 @@ static int parseargs (int ac, char **av)
     return 1;
   }
 
-  while ((c = getopt (ac, av, "e:s:v:")) != EOF) {
+  while ((c = getopt (ac, av, "o:e:s:v")) != EOF) {
     switch (c) {
       case 's':
         seed = atoi (optarg);
@@ -219,6 +216,10 @@ static int parseargs (int ac, char **av)
         break;
       case 'v':
         verbose = 1;
+        break;
+      case 'o':
+        output = 1;
+        strcpy(output_filename, optarg);
         break;
       case '?':
       default:
@@ -243,4 +244,5 @@ static void usage (char *f)
   fprintf (stderr, "   -s d  random seed\n");
   fprintf (stderr, "   -v    verbose\n");
   fprintf (stderr, "   -e f  set epsilon for threshold steps\n");
+  fprintf (stderr, "   -o s  output filename\n");
 }
