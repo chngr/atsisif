@@ -1,34 +1,13 @@
 <html>
   <head>
-  <style>
-    .node {
-      stroke: 'black';
-    }
-    .link {
-      stroke-width: 1px;
-    }
-    .handle {
-      fill: 'blue';
-    }
-  </style>
     <title>All the Same, I Saw it First</title>
   </head>
   <body>
-    <label for="upper_value">Upper Threshold: </label><input type="range" min="0" max="100" id="upper_value" value="100"><span id="upper_value_value">1</span>
-    <label for="lower_value">Lower Threshold: </label><input type="range" min="0" max="100" id="lower_value" value="0"><span id="lower_value_value">0</span>
-    <div>Toggle: <span id="handle_toggle">Handle</span> <span id="tooth_toggle">Teeth</span></div>
-    <div>
-      <span>Handle nodes: </span><span id="handle_nodes"></span>
-    </div>
-    <div id="teeth">
-    </div>
-    <div id="comb">
-      <span>Weight Sum: </span><span id="comb_weight_sum"></span><br/>
-      <span>RHS - LHS: </span><span id="comb_difference"></span><br/>
-    </div>
-    <div align="center" id="force_graph"></div>
-    <script src="lib/d3.min.js" charset="utf-8"></script>
-    <script src="js/atsisif.js"></script>
-    <script>draw_graph();</script>
+    <h2>Comb Searching Examples</h2>
+    <p><a href="app.html#test">Example 0</a> &em; 12 nodes</p>
+    <p><a href="app.html#a">Example 1</a> &em; 500 nodes</p>
+    <p><a href="app.html#b">Example 2</a> &em; 500 nodes</p>
+    <p><a href="app.html#c">Example 3</a> &em; 1000 nodes</p>
+    <p><a href="app.html#d">Example 4</a> &em; 1232 nodes</p>
   </body>
 </html>
