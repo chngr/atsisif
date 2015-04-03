@@ -15,14 +15,12 @@ static int find_combs(int ncount, int ecount, edge *elist);
 static char *fname = (char *) NULL;
 static int seed = 0;
 static int verbose = 0;
-static int display_combs = 0;
-static double EPSILON = 0.0001;
+static double EPSILON = 0.001;
 
 int main (int ac, char **av)
 {
   int rval  = 0, ncount = 0, ecount = 0;
   edge *elist = NULL;
-  double szeit;
 
   seed = (int) CO759_real_zeit ();
 
@@ -41,17 +39,10 @@ int main (int ac, char **av)
   rval = getprob (fname, &ncount, &ecount, &elist);
   if (rval) { fprintf (stderr, "getprob failed\n"); goto CLEANUP; }
 
-  szeit = CO759_zeit();
   qsort(elist, ecount, sizeof(edge), comp_edgewt);
-  if(verbose)
-    printf("Sorting time: %.2f seconds\n", CO759_zeit() - szeit);
-  fflush (stdout);
 
-  szeit = CO759_zeit ();
   rval = find_combs(ncount, ecount, elist);
   if (rval) { fprintf (stderr, "find_combs failed\n"); goto CLEANUP; }
-  if(verbose)
-    printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
   fflush (stdout);
 
 CLEANUP:
@@ -61,17 +52,14 @@ CLEANUP:
 
 static int find_combs(int ncount, int ecount, edge *elist)
 {
-  int i, j, rval = 0, *comps = NULL, ncomps, ncombs = 0, a, b, u_idx, l_idx, n_vcombs = 0;
-  double szeit, l = -1.0, u = 2.0, lhs, rhs;
+  int rval = 0, i, j, a, b, l_idx, u_idx, violating;
+  int ncomps, ncombs = 0, nvcombs = 0, vclist_size = 2;
+  int *comps = NULL;
+  double l = -EPSILON, u = 1.0 + EPSILON, lhs, rhs;
   graph G;
-  comb **clist = NULL;
+  comb **clist = NULL, **vclist = NULL;
   init_graph(&G);
-  szeit = CO759_zeit ();
   rval = build_contracted_graph(ncount, ecount, elist, &G);
-  if(verbose) {
-    printf ("Running Time for build_contracted_graph: %.2f seconds\n", CO759_zeit() - szeit);
-    printf("Graph nodes: %d Graph edges: %d\n", G.ncount, G.ecount);
-  }
 
   if (rval) {
     fprintf(stderr, "build_contracted_graph failed\n");
@@ -79,74 +67,88 @@ static int find_combs(int ncount, int ecount, edge *elist)
   }
 
   comps = malloc (ncount * sizeof (int));
-  if (!comps) {
-    fprintf(stderr, "not enough memory for comps\n");
+  vclist = malloc (vclist_size * sizeof (comb*));
+  if (!comps || !vclist) {
+    fprintf(stderr, "not enough memory for comps or vclist\n");
     rval = 1; goto CLEANUP;
   }
-  for (i = 0; i < G.ecount; i++) printf("%.6f ", G.elist[i].wt);
-  printf("\n");
+
   for(l_idx = 0, l = -EPSILON; l_idx < G.ecount - 1; l_idx++) {
     if (G.elist[l_idx].wt - l < EPSILON) continue;
     l = G.elist[l_idx].wt;
-    for(u_idx = G.ecount - 1, u = 1+EPSILON; u_idx > l_idx; u_idx--) {
+    for(u_idx = G.ecount - 1, u = 1 + EPSILON; u_idx > l_idx && u > l; u_idx--) {
       if (u - G.elist[u_idx].wt < EPSILON) continue;
       u = G.elist[u_idx].wt;
-      szeit = CO759_zeit ();
-      printf ("\nFinding components with (l,u): %.6f %.6f\n", l, u);
       get_comps(&G, comps, &ncomps, l, u);
-      if(verbose)
-        printf ("Running Time for get_comps: %.2f seconds\n", CO759_zeit() - szeit);
-
-      szeit = CO759_zeit ();
-      comps_to_combs(&G, ncomps, comps, &ncombs, &clist, verbose);
-      if(verbose)
-        printf ("Running Time for comps_to_combs: %.2f seconds\n", CO759_zeit() - szeit);
-      n_vcombs = 0;
+      comps_to_combs(&G, ncomps, comps, &ncombs, &clist);
       for (i = 0; i < ncombs; i++) {
+        violating = 0;
         if (valid_comb(clist[i])) {
           lhs = comb_weight(clist[i]);
           rhs = 3 * clist[i]->nteeth + 1;
           if(lhs < rhs) {
-            n_vcombs++;
-            printf("Found violating comb with |H| = %d and %d teeth with violation %.6f\n", clist[i]->nhandle, clist[i]->nteeth, rhs - lhs);
-
-            if (display_combs) {
-              for (j = 0; j < clist[i]->G->ncount; j++)
-                clist[i]->G->nodelist[j].mark = 0;
-              for (j = 0; j < clist[i]->nhandle; j++)
-                clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
-
-              printf("[Handle Nodes]\n");
-              for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
-              printf("\n");
-
-              printf("[Handle Edges]\n");
-              for (j = 0; j < clist[i]->G->ecount; j++) {
-                a = clist[i]->G->elist[j].end1; b = clist[i]->G->elist[j].end2;
-                if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
-                  printf("%d %d %.2f\n", a, b, clist[i]->G->elist[j].wt);
+            for (j = 0; j < nvcombs; j++) {
+              if(equal_combs(clist[i], vclist[j])) break;
+            }
+            if (j == nvcombs) {
+              violating = 1;
+              if(nvcombs + 1 > vclist_size) {
+                vclist_size *= 2;
+                vclist = realloc (vclist, vclist_size * sizeof (comb*));
+                if (!vclist) {
+                  fprintf(stderr, "out of memory for vclist\n");
+                  rval = 1; goto CLEANUP;
+                }
               }
+              vclist[nvcombs++] = clist[i];
+              printf("Found violating comb #%d with |H| = %d and %d teeth with violation %.6f\n", nvcombs, clist[i]->nhandle, clist[i]->nteeth, rhs - lhs);
 
-              printf("[Teeth]\n");
-              for (j = 0; j < clist[i]->nteeth; j++) {
-                int k = clist[i]->teethedges[j];
-                printf("%d %d %.2f\n", clist[i]->G->elist[k].end1, clist[i]->G->elist[k].end2, clist[i]->G->elist[k].wt);
+              if (verbose) {
+                for (j = 0; j < clist[i]->G->ncount; j++)
+                  clist[i]->G->nodelist[j].mark = 0;
+                for (j = 0; j < clist[i]->nhandle; j++)
+                  clist[i]->G->nodelist[clist[i]->handlenodes[j]].mark = 1;
+
+                printf("[Handle Nodes]\n");
+                for (j = 0; j < clist[i]->nhandle; j++) printf("%d ", clist[i]->handlenodes[j]);
+                printf("\n");
+
+                printf("[Handle Edges]\n");
+                for (j = 0; j < clist[i]->G->ecount; j++) {
+                  a = clist[i]->G->elist[j].end1; b = clist[i]->G->elist[j].end2;
+                  if (clist[i]->G->nodelist[a].mark + clist[i]->G->nodelist[b].mark == 2)
+                    printf("%d %d %.2f\n", a, b, clist[i]->G->elist[j].wt);
+                }
+
+                printf("[Teeth]\n");
+                for (j = 0; j < clist[i]->nteeth; j++) {
+                  int k = clist[i]->teethedges[j];
+                  printf("%d %d %.6f\n", clist[i]->G->elist[k].end1, clist[i]->G->elist[k].end2, clist[i]->G->elist[k].wt);
+                }
+                printf("\n");
               }
-              printf("\n");
             }
           }
         }
+        if (!violating && clist[i]) { destroy_comb(clist[i]); free (clist[i]); }
       }
-      printf("Found %d violated combs\n", n_vcombs);
+      if (clist) {
+        free (clist);
+      }
     }
   }
+  printf("Found %d violating combs\n", nvcombs);
 
 CLEANUP:
   free_graph(&G);
   if(comps) free (comps);
-  if(clist) {
-    for (i = 0; i < ncombs; i++) { destroy_comb(clist[i]); }
-    free (clist);
+  if(vclist) {
+    for (i = 0; i < nvcombs; i++) {
+      if(vclist[i]) {
+        destroy_comb(vclist[i]);
+        free (vclist[i]);
+      }
+    }
   }
   return rval;
 }
@@ -207,7 +209,7 @@ static int parseargs (int ac, char **av)
     return 1;
   }
 
-  while ((c = getopt (ac, av, "c:e:s:v:")) != EOF) {
+  while ((c = getopt (ac, av, "e:s:v:")) != EOF) {
     switch (c) {
       case 's':
         seed = atoi (optarg);
@@ -217,9 +219,6 @@ static int parseargs (int ac, char **av)
         break;
       case 'v':
         verbose = 1;
-        break;
-      case 'c':
-        display_combs = 1;
         break;
       case '?':
       default:
@@ -243,6 +242,5 @@ static void usage (char *f)
   fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
   fprintf (stderr, "   -s d  random seed\n");
   fprintf (stderr, "   -v    verbose\n");
-  fprintf (stderr, "   -c    display violating combs\n");
   fprintf (stderr, "   -e f  set epsilon for threshold steps\n");
 }

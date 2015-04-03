@@ -6,11 +6,17 @@
 int valid_comb (comb *C);
 double comb_weight(comb *C);
 int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist, int verbose);
+    comb ***p_clist);
 void destroy_comb(comb *C);
 
+int comp_int(const void *a, const void *b) {
+  if(*(int *) a < *(int *)b) return -1;
+  if(*(int *) a > *(int *)b) return 1;
+  return 0;
+}
+
 int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist, int verbose)
+    comb ***p_clist)
 {
   int rval = 0, i, j, k, l, m, nteeth, best_t;
   double best_wt, node_wt;
@@ -73,20 +79,17 @@ int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
       }
     }
     clist[j]->nteeth = nteeth;
-    clist[j]->teethedges = malloc (nteeth * sizeof (int));
+    clist[j]->teethedges = malloc (clist[j]->nteeth * sizeof (int));
     if (!clist[j]->teethedges) {
       fprintf(stderr, "not enough memory for clist[%d]->teethedges\n", j);
       rval = 1; goto CLEANUP;
     }
-    for (k = 0; k < nteeth; k++) clist[j]->teethedges[k] = tmp_ts[k] ;
+    for (k = 0; k < clist[j]->nteeth; k++) clist[j]->teethedges[k] = tmp_ts[k];
+    qsort(clist[j]->handlenodes, clist[j]->nhandle, sizeof(int), comp_int);
+    qsort(clist[j]->teethedges, clist[j]->nteeth, sizeof(int), comp_int);
     j++;
   }
   *p_clist = clist;
-  if(verbose) {
-    for (i = 0; i < *ncombs; i++) {
-      printf("[comb candidate %d] nhandle: %d nteeth: %d\n", i, clist[i]->nhandle, clist[i]->nteeth);
-    }
-  }
 CLEANUP:
   if (c_sizes) free (c_sizes);
   if (tmp_ts) free (tmp_ts);
@@ -137,4 +140,18 @@ void destroy_comb (comb *C)
 {
   if(C->handlenodes) free (C->handlenodes);
   if(C->teethedges) free (C->teethedges);
+}
+
+int equal_combs(comb *C, comb *D)
+{
+  int i;
+  if(C->nteeth != D->nteeth || C->nhandle != D->nhandle)
+    return 0;
+  for (i = 0; i < C->nhandle; i++) {
+    if(C->handlenodes[i] != D->handlenodes[i]) return 0;
+  }
+  for (i = 0; i < C->nteeth; i++) {
+    if(C->teethedges[i] != D->teethedges[i]) return 0;
+  }
+  return 1;
 }

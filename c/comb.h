@@ -10,7 +10,8 @@ typedef struct comb {
   int *teethedges;  /* Indices for edges for teeth */
 } comb;
 
-int comps_to_combs(graph*, int, int*, int*, comb***, int);
+int comps_to_combs(graph*, int, int*, int*, comb***);
+int equal_combs(comb *, comb *);
 int valid_comb(comb *);
 double comb_weight(comb *);
 void destroy_comb(comb *);
