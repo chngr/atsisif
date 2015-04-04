@@ -4,8 +4,8 @@
 #include "graph.h"
 
 double comb_weight(comb *C);
-int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs, comb ***p_clist);
 int comb_int(const void *a, const void *b);
+int comps_to_combs(graph *C, int ncomps, int *comps, int *ncombs, comb ***p_clist);
 int valid_comb (comb *C);
 void destroy_comb(comb *C);
 void print_comb(comb *C, int *original_indices);
@@ -16,8 +16,7 @@ int comp_int(const void *a, const void *b) {
   return 0;
 }
 
-int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs,
-    comb ***p_clist)
+int comps_to_combs(graph *G, int ncomps, int *comps, int *ncombs, comb ***p_clist)
 {
   int rval = 0, i, j, k, l, m, nteeth, best_t;
   double best_wt, node_wt;

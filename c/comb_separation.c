@@ -14,7 +14,6 @@ static void usage (char *f);
 static int find_combs(int ncount, int ecount, edge *elist);
 
 static char *fname = (char *) NULL;
-static int seed = 0;
 static int verbose = 0;
 static double EPSILON = 0.001;
 static int output = 0;
@@ -24,9 +23,6 @@ int main (int ac, char **av)
 {
   int rval  = 0, ncount = 0, ecount = 0;
   edge *elist = NULL;
-
-  seed = (int) CO759_real_zeit ();
-
   rval = parseargs (ac, av);
   printf("Epsilon: %.6f\n", EPSILON);
   printf("Output: %d Filename: %s\n", output, output_filename);
@@ -36,7 +32,6 @@ int main (int ac, char **av)
     printf ("Must specify a problem file\n");
     rval = 1; goto CLEANUP;
   }
-  srandom (seed);
 
   if (fname) printf ("Problem name: %s\n", fname);
 
@@ -110,9 +105,7 @@ static int find_combs(int ncount, int ecount, edge *elist)
         }
         if (!violating && clist[i]) { destroy_comb(clist[i]); free (clist[i]); }
       }
-      if (clist) {
-        free (clist);
-      }
+      if (clist) { free (clist); }
     }
   }
   printf("Found %d violating combs\n", nvcombs);
@@ -141,10 +134,7 @@ CLEANUP:
   if(original_indices) free (original_indices);
   if(vclist) {
     for (i = 0; i < nvcombs; i++) {
-      if(vclist[i]) {
-        destroy_comb(vclist[i]);
-        free (vclist[i]);
-      }
+      if(vclist[i]) { destroy_comb(vclist[i]); free (vclist[i]); }
     }
   }
   return rval;
@@ -208,9 +198,6 @@ static int parseargs (int ac, char **av)
 
   while ((c = getopt (ac, av, "o:e:s:v")) != EOF) {
     switch (c) {
-      case 's':
-        seed = atoi (optarg);
-        break;
       case 'e':
         EPSILON = atof (optarg);
         break;
@@ -241,7 +228,6 @@ static int parseargs (int ac, char **av)
 static void usage (char *f)
 {
   fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
-  fprintf (stderr, "   -s d  random seed\n");
   fprintf (stderr, "   -v    verbose\n");
   fprintf (stderr, "   -e f  set epsilon for threshold steps\n");
   fprintf (stderr, "   -o s  output filename\n");
