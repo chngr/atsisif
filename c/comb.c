@@ -173,7 +173,7 @@ void print_comb(comb *C, int *original_indices)
   for (i = 0; i < C->G->ecount; i++) {
     a = C->G->elist[i].end1; b = C->G->elist[i].end2;
     if (C->G->nodelist[a].mark + C->G->nodelist[b].mark == 2)
-      printf("%d %d %.2f\n", a, b, C->G->elist[i].wt);
+      printf("%d %d %.2f\n", original_indices[a], original_indices[b], C->G->elist[i].wt);
   }
 
   printf("[Teeth]\n");
