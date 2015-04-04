@@ -17,6 +17,6 @@ if __name__ == '__main__':
   out = open("{0}_violations.csv".format(filename.split('.')[0]), 'w')
   out.write("violation\n")
   for v in violations:
-    out.write("{0}\n".format(v))
+    out.write("{0:.6f}\n".format(v))
   out.close()
 

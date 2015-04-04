@@ -25,6 +25,10 @@
 \usepackage[tracking]{microtype}
 \usepackage{stackrel,braket}
 \usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{width=0.9\textwidth, height=12em}
 
 \setlength{\oddsidemargin}{0cm}
 \setlength{\evensidemargin}{0cm}
@@ -461,8 +465,73 @@ they are valid and whether or not they violate~\eqref{ineq:comb}. In the case th
 both statements are true, they are stored for later use.
 
 \section{Computational Results}\label{sec:computations}
-We have
+We ran our algorithm on several test sets and recorded the running time, the
+number of violated combs found and various data about the violating combs
+themselves. All computations were done on a MacBook Pro with a $2.4$ GHz Intel
+Core i$5$.
 
+\begin{figure}
+\begin{tabular}{l | c | c | c | c | c}
+  \toprule
+  Problem Name & Nodes & Edges & $\epsilon$ & Running Time & Violating Combs Found \\
+  \midrule
+  \texttt{E100\_up0\_sub.x} & 100,000 & 133,709 & 0.01 & 2:07:27.97 & 216 \\
+  \texttt{usa115\_up1\_sub.x} & 115,475 & 151,553 & 0.01 & 2:17:17.68 & 272 \\
+  \texttt{mona\_up2\_sub.x} & 100,000 & 124,819 & 0.01 & 1:15:20.09 & 269 \\
+  \midrule
+  \texttt{B\_s13\_k5000.x} & 5,000 & 6,514 & 0.001 & 0:02:49.27 & 30 \\
+  \texttt{B\_s14\_k5000.x} & 5,000 & 6,698 & 0.001 & 0:03:57.09 & 31 \\
+  \texttt{B\_s15\_k5000.x} & 5,000 & 6,585 & 0.001 & 0:03:49.08 & 22 \\
+  \texttt{B\_s16\_k5000.x} & 5,000 & 6,689 & 0.001 & 0:04:31.07 & 55 \\
+  \texttt{B\_s17\_k5000.x} & 5,000 & 6,507 & 0.001 & 0:02:39.55 & 42 \\
+  \texttt{B\_s18\_k5000.x} & 5,000 & 6,422 & 0.001 & 0:02:53.23 & 25 \\
+  \midrule
+  \texttt{B\_s19\_k5000.x} & 10,000 & 12,614 & 0.001 & 0:14:27.55 & 26 \\
+  \texttt{B\_s20\_k5000.x} & 10,000 & 13,277 & 0.001 & 0:31:06.10 & 76 \\
+  \texttt{B\_s21\_k5000.x} & 10,000 & 13,155 & 0.001 & 0:26:20.64 & 54 \\
+  \texttt{B\_s22\_k5000.x} & 10,000 & 12,527 & 0.001 & 0:14:59.88 & 66 \\
+  \texttt{B\_s23\_k5000.x} & 10,000 & 12,913 & 0.001 & 0:23:05.62 & 46 \\
+  \bottomrule
+\end{tabular}
+\end{figure}
+Besides running time and the number of violating combs found, it is also
+interesting to examine the violation of these combs. A quick glance through the
+raw log files shows that most violating combs found have low violation: the
+inequality~\eqref{ineq:comb} is violated by no more than $0.000001$. The
+histograms show the number of combs which violate~\eqref{ineq:comb}
+within each $0.05$ bin in the interval $[0,1]$ in each of the problems
+\texttt{E100\_up0\_sub.x}, \texttt{usa115\_up1\_sub.x} and
+\texttt{mona\_up2\_sub.x}.
+\begin{figure}
+\begin{tikzpicture}
+  \begin{axis}[ymin=0,xmin=0,xmax=1,ybar,
+               title={\texttt{E100\_up0\_sub.x}},
+               xlabel={Violation},
+               ylabel={Count}]
+    \addplot+[hist={data=x,bins=20}] file {data/e100.dat};
+  \end{axis}
+\end{tikzpicture}
+\end{figure}
+\begin{figure}
+\begin{tikzpicture}
+  \begin{axis}[ymin=0,xmin=0,xmax=1,ybar,
+               title={\texttt{usa115\_up1\_sub.x}},
+               xlabel={\small Violation},
+               ylabel={\small Count}]
+    \addplot+[hist={data=x,bins=20}] file {data/usa.dat};
+  \end{axis}
+\end{tikzpicture}
+\end{figure}
+\begin{figure}
+\begin{tikzpicture}
+  \begin{axis}[ymin=0,xmin=0,xmax=1,ybar,
+               title={\texttt{mona\_up2\_sub.x}},
+               ylabel={\small Count},
+               xlabel={\small Violation}]
+    \addplot+[hist={data=x,bins=20}] file {data/mona_lisa.dat};
+  \end{axis}
+\end{tikzpicture}
+\end{figure}
 \section{Improvements and Optimizations}\label{sec:opt}
 We have described a fairly simple procedure to look for violated comb
 inequalities. There are many ways to improve the effectiveness and efficiency
