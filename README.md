@@ -1,8 +1,17 @@
 # All the Same, I Saw it First
 
-Currently contained here is a piece to visualize x-vectors. Edges between nodes
-are coloured based on their weight, where darker edges have weight close to 1,
-redder edges have weight close to 0.5 and bluer edges have weight close to 0.
+This respository contains:
+  - An interactive ```x```-vector visualization application;
+  - Implementation of a heuristic algorithm to find violated comb inequalities;
+  - A report going along with the algorithm;
+  - Test data and results for the algorithm.
+
+## Interactive ```x```-vector Visualization
+
+In the process of designing our heuristic algorithm, we have found it useful to
+try to manually construct examples of violated combs. We facilitated this
+process by throwing together a simple Javascript application for that purpose.
+An instance of this application is running [here](chngr.github.io/atsisif/).
 
 There are several interactions that are currently possible:
   - A slider allows one to hide edges of weights higher than some value;
@@ -17,12 +26,6 @@ There are several interactions that are currently possible:
 No restrictions are currently in place making sure that the handle sets and the
 teeth are valid. In particular, nothing checks that a selection is actually a
 comb.
-
-## How to Run
-
-You could either open ```index.html``` directly in your browser, and things
-should run. Alternatively, you could start a web server at the root of the
-directory and serve it locally.
 
 ## Misc Notes
 1. Cycles consisting entirely of fractional nodes seem to be a good sign that
